@@ -1,6 +1,6 @@
 # Hướng dẫn sử dụng hệ thống Jeju
 
-> Phiên bản tài liệu: 0.23
+> Phiên bản tài liệu: 0.24
 > Cập nhật gần nhất: 11/10/2026  
 > Phạm vi: môi trường phát triển local
 
@@ -87,15 +87,13 @@ Cấu hình tài khoản Admin bootstrap, chỉ nên dùng khi khởi tạo môi
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=replace_with_a_strong_password
 ADMIN_NAME=Jeju Admin
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_google_app_password
-SMTP_FROM=Jeju <your_email@gmail.com>
+RESEND_API_KEY=re_your_resend_api_key
+RESEND_FROM=Jeju <onboarding@resend.dev>
 ```
 
-Để gửi mã xác nhận bằng Gmail, bật xác minh hai bước cho tài khoản Google và tạo **App Password**; đặt mật khẩu ứng dụng vào `SMTP_PASS`, không dùng mật khẩu Gmail thông thường. Nếu chưa cấu hình SMTP ở môi trường local, backend ghi mã vào terminal và frontend hiển thị mã kiểm thử. Production không trả mã kiểm thử về trình duyệt.
+Email xác nhận và đặt lại mật khẩu được gửi qua Resend HTTPS API để tương thích Railway Trial/Free/Hobby, nơi kết nối SMTP outbound bị chặn. Nếu chưa cấu hình Resend ở môi trường local, backend ghi mã vào terminal và frontend hiển thị mã kiểm thử. Production không trả mã kiểm thử về trình duyệt.
+
+`onboarding@resend.dev` chỉ phù hợp để kiểm thử theo giới hạn tài khoản Resend. Muốn gửi cho thành viên bằng các địa chỉ email khác, cần thêm và xác minh domain trong Resend rồi đổi `RESEND_FROM`, ví dụ `Jeju <no-reply@your-domain.com>`.
 
 Không commit `.env`, API key, JWT secret hoặc database SQLite.
 
@@ -561,7 +559,7 @@ Hệ thống hiện chạy ổn ở môi trường local nhưng **chưa được
 - Deploy `client/` thành một Railway service có reverse proxy `/api` về backend để cookie đăng nhập vẫn cùng origin với giao diện.
 - Gắn Railway Volume cho SQLite và ảnh upload. Nếu không có volume, dữ liệu sẽ mất khi service được redeploy.
 
-Không commit `backend/.env`, API key, mật khẩu Gmail App Password, JWT secret, file SQLite hoặc thư mục upload. Root `.gitignore` đã loại trừ các dữ liệu này.
+Không commit `backend/.env`, Gemini/Resend API key, JWT secret, file SQLite hoặc thư mục upload. Root `.gitignore` đã loại trừ các dữ liệu này.
 
 ### 15.2. Tạo Git repository local
 
@@ -612,15 +610,11 @@ DATABASE_PATH=/data/jeju-ai.sqlite
 ADMIN_EMAIL=...
 ADMIN_PASSWORD=...
 ADMIN_NAME=Jeju Admin
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=...
-SMTP_PASS=...
-SMTP_FROM=Jeju <...>
+RESEND_API_KEY=re_...
+RESEND_FROM=Jeju <onboarding@resend.dev>
 ```
 
-Không tự đặt `PORT`; Railway cấp biến này cho service. `SMTP_PASS` phải là Gmail App Password, không phải mật khẩu Gmail thông thường.
+Không tự đặt `PORT`; Railway cấp biến này cho service. Không dùng SMTP trên Railway Trial/Free/Hobby vì nền tảng chặn outbound SMTP; Resend trong dự án được gọi qua HTTPS API và có timeout 10 giây.
 
 ### 15.5. Các bước Railway sau khi mã nguồn đã có trên GitHub
 
@@ -645,7 +639,7 @@ Không dùng `npm run preview` làm web server production lâu dài. Frontend đ
 - Refresh trang ở các route sâu không trả 404.
 - Upload ảnh, redeploy backend rồi xác nhận ảnh và dữ liệu vẫn còn.
 - Admin vào được `/admin`; Member không vào được route Admin.
-- `JWT_SECRET`, `GEMINI_API_KEY` và `SMTP_PASS` không xuất hiện trong repository hoặc log frontend.
+- `JWT_SECRET`, `GEMINI_API_KEY` và `RESEND_API_KEY` không xuất hiện trong repository hoặc log frontend.
 - Chỉ chia sẻ URL frontend cho thành viên, không chia sẻ secret.
 
 ## 16. Chức năng chưa hoàn thiện
@@ -678,6 +672,7 @@ Khi thêm hoặc thay đổi chức năng có ảnh hưởng đến người dù
 
 | Ngày | Phiên bản | Thay đổi |
 | --- | --- | --- |
+| 11/10/2026 | 0.24 | Chuyển email OTP và đặt lại mật khẩu từ Gmail SMTP sang Resend HTTPS API để chạy trên Railway Trial/Free/Hobby; bổ sung timeout 10 giây và hướng dẫn sender/domain. |
 | 11/10/2026 | 0.23 | Thêm Docker/Caddy cho frontend Railway, SPA fallback và reverse proxy `/api` về backend để duy trì cookie đăng nhập cùng origin. |
 | 11/10/2026 | 0.22 | Thêm quy trình GitHub private và kế hoạch deploy tạm bằng Railway; bổ sung checklist secret, volume SQLite/upload, SMTP và xác định rõ phần production chưa hoàn thiện. |
 | 11/10/2026 | 0.21 | Đổi mật khẩu Admin local sang giá trị đáp ứng validation frontend và chuẩn bị cấu hình SMTP Gmail cho email xác nhận/khôi phục. |
