@@ -1,6 +1,6 @@
 # Hướng dẫn sử dụng hệ thống Jeju
 
-> Phiên bản tài liệu: 0.22  
+> Phiên bản tài liệu: 0.23
 > Cập nhật gần nhất: 11/10/2026  
 > Phạm vi: môi trường phát triển local
 
@@ -630,10 +630,13 @@ Không tự đặt `PORT`; Railway cấp biến này cho service. `SMTP_PASS` ph
 4. Nhập các biến môi trường backend ở mục Variables.
 5. Gắn volume tại `/data`; cấu hình database và upload phải cùng trỏ vào volume bền vững.
 6. Generate Domain cho backend và kiểm tra `https://BACKEND-DOMAIN/api/health`.
-7. Tạo service `Frontend`, Root Directory là `/client`; frontend cần cấu hình static server và reverse proxy trước khi deploy.
-8. Generate Domain cho frontend, kiểm tra đăng nhập, đăng ký/xác nhận email, chat AI, upload ảnh và Admin dashboard.
+7. Tạo service `Frontend`, kết nối cùng GitHub repository và đặt Root Directory là `/client`.
+8. Frontend sử dụng `client/Dockerfile` để build Vite và Caddy để phục vụ static files, fallback các route SPA về `index.html`, đồng thời reverse proxy `/api/*`.
+9. Trong Variables của Frontend, thêm `BACKEND_UPSTREAM=https://DOMAIN-BACKEND.up.railway.app`; không thêm dấu `/` ở cuối.
+10. Railway tự nhận Dockerfile; không cần đặt Build Command hoặc Start Command cho Frontend.
+11. Generate Domain cho frontend, kiểm tra đăng nhập, đăng ký/xác nhận email, chat AI, upload ảnh và Admin dashboard.
 
-Phần Docker/static server, reverse proxy frontend và đường dẫn upload theo volume sẽ được bổ sung trước lần deploy đầu tiên. Không dùng `npm run preview` làm web server production lâu dài.
+Không dùng `npm run preview` làm web server production lâu dài. Frontend đã có cấu hình Caddy cho bản deploy tạm; đường dẫn upload theo volume backend vẫn cần hoàn thiện trước khi coi dữ liệu là bền vững.
 
 ### 15.6. Checklist sau deploy
 
@@ -651,7 +654,7 @@ Phần Docker/static server, reverse proxy frontend và đường dẫn upload t
 - Offer tuyển chọn vẫn dùng nội dung mẫu phía frontend; carousel và trang khám phá đã lấy địa điểm qua API SQLite.
 - Google Places API và bản đồ được tạm hoãn; chưa có API key hoặc biến môi trường liên quan.
 - Quên mật khẩu và xác minh email đã có; gửi email thật phụ thuộc cấu hình SMTP hợp lệ của môi trường chạy.
-- Chưa có cấu hình deploy production cho static frontend, reverse proxy và volume upload; hướng dẫn mục 15 mới là quy trình chuẩn bị.
+- Frontend đã có Docker/Caddy, SPA fallback và reverse proxy để deploy tạm; backend vẫn chưa đưa thư mục upload vào volume bền vững.
 - Chưa có refresh-token rotation hoặc thu hồi session theo thiết bị.
 - Editor và Moderator chưa có workspace riêng.
 - Chưa chỉnh sửa lịch trình theo từng ngày hoặc kéo thả hoạt động sau khi lưu.
@@ -675,6 +678,7 @@ Khi thêm hoặc thay đổi chức năng có ảnh hưởng đến người dù
 
 | Ngày | Phiên bản | Thay đổi |
 | --- | --- | --- |
+| 11/10/2026 | 0.23 | Thêm Docker/Caddy cho frontend Railway, SPA fallback và reverse proxy `/api` về backend để duy trì cookie đăng nhập cùng origin. |
 | 11/10/2026 | 0.22 | Thêm quy trình GitHub private và kế hoạch deploy tạm bằng Railway; bổ sung checklist secret, volume SQLite/upload, SMTP và xác định rõ phần production chưa hoàn thiện. |
 | 11/10/2026 | 0.21 | Đổi mật khẩu Admin local sang giá trị đáp ứng validation frontend và chuẩn bị cấu hình SMTP Gmail cho email xác nhận/khôi phục. |
 | 11/10/2026 | 0.20 | Reset tài khoản kiểm thử Admin thành username `admin`, email `pttnguyen528@gmail.com`; đồng bộ seed và xóa tài khoản Tây Nguyên khỏi database local. |
