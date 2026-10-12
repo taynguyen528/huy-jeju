@@ -1,7 +1,7 @@
 # Hướng dẫn sử dụng hệ thống Jeju
 
-> Phiên bản tài liệu: 0.24
-> Cập nhật gần nhất: 11/10/2026  
+> Phiên bản tài liệu: 0.28
+> Cập nhật gần nhất: 12/10/2026
 > Phạm vi: môi trường phát triển local
 
 ## 1. Giới thiệu
@@ -87,13 +87,23 @@ Cấu hình tài khoản Admin bootstrap, chỉ nên dùng khi khởi tạo môi
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=replace_with_a_strong_password
 ADMIN_NAME=Jeju Admin
+EMAIL_PROVIDER=console
+BREVO_API_KEY=xkeysib_your_brevo_api_key
+BREVO_FROM_EMAIL=your_verified_sender@gmail.com
+BREVO_FROM_NAME=Jeju
 RESEND_API_KEY=re_your_resend_api_key
 RESEND_FROM=Jeju <onboarding@resend.dev>
 ```
 
-Email xác nhận và đặt lại mật khẩu được gửi qua Resend HTTPS API để tương thích Railway Trial/Free/Hobby, nơi kết nối SMTP outbound bị chặn. Nếu chưa cấu hình Resend ở môi trường local, backend ghi mã vào terminal và frontend hiển thị mã kiểm thử. Production không trả mã kiểm thử về trình duyệt.
+Email xác nhận và đặt lại mật khẩu hỗ trợ Brevo hoặc Resend qua HTTPS API để tương thích Railway Trial/Free/Hobby, nơi kết nối SMTP outbound bị chặn. Nếu dùng `console` ở môi trường local, backend ghi mã vào terminal và frontend hiển thị mã kiểm thử. Production không trả mã kiểm thử về trình duyệt.
+
+Ở local, giữ `EMAIL_PROVIDER=console` để không gọi dịch vụ bên ngoài và nhận `devCode` ngay trên giao diện. Trên Railway khi chưa có domain riêng, nên đặt `EMAIL_PROVIDER=brevo`, cùng `BREVO_API_KEY`, `BREVO_FROM_EMAIL` đã xác minh và `BREVO_FROM_NAME`. Brevo gọi qua HTTPS và cho phép bắt đầu bằng cách xác minh riêng địa chỉ gửi.
 
 `onboarding@resend.dev` chỉ phù hợp để kiểm thử theo giới hạn tài khoản Resend. Muốn gửi cho thành viên bằng các địa chỉ email khác, cần thêm và xác minh domain trong Resend rồi đổi `RESEND_FROM`, ví dụ `Jeju <no-reply@your-domain.com>`.
+
+Không để nguyên domain mẫu như `yourdomain.com` hoặc `example.com`: backend sẽ dừng sớm và báo lỗi cấu hình rõ ràng. API key dạng chỉ-gửi-email không có quyền đọc danh sách domain; việc xác minh domain cần được kiểm tra trong dashboard Resend.
+
+Nếu dùng `onboarding@resend.dev`, Resend chỉ cho phép gửi tới email chủ tài khoản Resend. Đăng ký bằng email người dùng khác sẽ nhận lỗi dịch vụ `503`; để gửi rộng rãi, cần xác minh domain riêng và dùng sender thuộc domain đó.
 
 Không commit `.env`, API key, JWT secret hoặc database SQLite.
 
@@ -610,11 +620,13 @@ DATABASE_PATH=/data/jeju-ai.sqlite
 ADMIN_EMAIL=...
 ADMIN_PASSWORD=...
 ADMIN_NAME=Jeju Admin
-RESEND_API_KEY=re_...
-RESEND_FROM=Jeju <onboarding@resend.dev>
+EMAIL_PROVIDER=brevo
+BREVO_API_KEY=xkeysib_...
+BREVO_FROM_EMAIL=dia-chi-gmail-da-xac-minh@gmail.com
+BREVO_FROM_NAME=Jeju
 ```
 
-Không tự đặt `PORT`; Railway cấp biến này cho service. Không dùng SMTP trên Railway Trial/Free/Hobby vì nền tảng chặn outbound SMTP; Resend trong dự án được gọi qua HTTPS API và có timeout 10 giây.
+Không tự đặt `PORT`; Railway cấp biến này cho service. Không dùng SMTP trên Railway Trial/Free/Hobby vì nền tảng chặn outbound SMTP; Brevo và Resend trong dự án đều được gọi qua HTTPS API và có timeout 10 giây.
 
 ### 15.5. Các bước Railway sau khi mã nguồn đã có trên GitHub
 
@@ -672,6 +684,10 @@ Khi thêm hoặc thay đổi chức năng có ảnh hưởng đến người dù
 
 | Ngày | Phiên bản | Thay đổi |
 | --- | --- | --- |
+| 12/10/2026 | 0.28 | Thêm Brevo HTTPS API làm lựa chọn mặc định trên production/Railway khi chưa có domain riêng; vẫn giữ `console` cho local và Resend cho môi trường đã cấu hình. |
+| 12/10/2026 | 0.27 | Phân loại lỗi gửi email là lỗi dịch vụ `503` thay vì lỗi request `400`; chuyển lỗi sandbox Resend thành hướng dẫn tiếng Việt và không trả địa chỉ email chủ tài khoản trong thông báo. |
+| 12/10/2026 | 0.26 | Sửa lỗi Resend do `RESEND_FROM` dùng domain mẫu; chuẩn hóa và kiểm tra cấu hình email, đồng thời làm rõ lỗi trả về từ Resend. |
+| 11/10/2026 | 0.25 | Tách chế độ email theo môi trường: local `console` trả OTP kiểm thử, Railway `resend` gửi qua HTTPS API; chuẩn hóa thông báo lỗi không còn nhắc SMTP. |
 | 11/10/2026 | 0.24 | Chuyển email OTP và đặt lại mật khẩu từ Gmail SMTP sang Resend HTTPS API để chạy trên Railway Trial/Free/Hobby; bổ sung timeout 10 giây và hướng dẫn sender/domain. |
 | 11/10/2026 | 0.23 | Thêm Docker/Caddy cho frontend Railway, SPA fallback và reverse proxy `/api` về backend để duy trì cookie đăng nhập cùng origin. |
 | 11/10/2026 | 0.22 | Thêm quy trình GitHub private và kế hoạch deploy tạm bằng Railway; bổ sung checklist secret, volume SQLite/upload, SMTP và xác định rõ phần production chưa hoàn thiện. |
