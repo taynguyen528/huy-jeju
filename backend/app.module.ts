@@ -18,10 +18,11 @@ import { DestinationService } from './destinations/destination.service.js'
 import { PresenceController } from './presence/presence.controller.js'
 import { PresenceService } from './presence/presence.service.js'
 import { MailService } from './auth/mail.service.js'
+import { PlaceResolverService } from './maps/place-resolver.service.js'
 
 @Module({
   imports: [JwtModule.register({ global: true, secret: process.env.JWT_SECRET || 'development-only-change-me', signOptions: { expiresIn: '7d' } })],
   controllers: [HealthController, ChatController, ContentController, AuthController, AdminController, ItineraryController, MediaController, DestinationController, PresenceController],
-  providers: [ContentService, DatabaseService, AuthService, MailService, AdminGuard, MemberGuard, ItineraryService, DestinationService, PresenceService],
+  providers: [ContentService, DatabaseService, AuthService, MailService, AdminGuard, MemberGuard, ItineraryService, DestinationService, PresenceService, PlaceResolverService],
 })
 export class AppModule {}

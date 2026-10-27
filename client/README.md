@@ -15,7 +15,7 @@ Mở một terminal khác để chạy backend:
 cd ..\backend
 npm install
 Copy-Item .env.example .env
-# Điền GEMINI_API_KEY trong .env
+# Điền OPENAI_BASE_URL, OPENAI_API_KEY và OPENAI_MODEL trong .env
 npm run dev
 ```
 
@@ -27,9 +27,9 @@ Frontend chạy tại `http://localhost:5173` và proxy `/api` sang backend tạ
 - `/van-hoa`: danh sách bài văn hóa đã xuất bản.
 - `/admin/content`: tạo bài, đổi trạng thái và lưu trữ nội dung.
 
-## Bảo mật Gemini key
+## Bảo mật API key
 
-Frontend không đọc `GEMINI_API_KEY`. Trình duyệt gọi `/api/chat`; NestJS trong `../backend` mới gọi Gemini. Không đưa API key vào biến `VITE_*` vì các biến này xuất hiện trong bundle trình duyệt.
+Frontend không đọc `OPENAI_API_KEY`. Trình duyệt gọi `/api/chat`; NestJS trong `../backend` mới gọi gateway OpenAI-compatible. Không đưa API key vào biến `VITE_*` vì các biến này xuất hiện trong bundle trình duyệt.
 
 ## Scripts
 

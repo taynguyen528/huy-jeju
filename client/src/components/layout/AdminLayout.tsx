@@ -7,7 +7,7 @@ import { Burger, Drawer } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 
 function AdminNavigation({ onNavigate }: { onNavigate?: () => void }) {
-    return <><span>ADMIN WORKSPACE</span><NavLink to="/admin" end onClick={onNavigate}><LayoutDashboard size={17} /> Tổng quan</NavLink><NavLink to="/admin/content" onClick={onNavigate}><FileText size={17} /> Nội dung</NavLink><NavLink to="/admin/users" onClick={onNavigate}><UsersRound size={17} /> Người dùng</NavLink></>;
+    return <><span>ADMIN WORKSPACE</span><NavLink to="/admin" end onClick={onNavigate}><LayoutDashboard size={17} /> Overview</NavLink><NavLink to="/admin/content" onClick={onNavigate}><FileText size={17} /> Content</NavLink><NavLink to="/admin/users" onClick={onNavigate}><UsersRound size={17} /> Users</NavLink></>;
 }
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -25,12 +25,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <footer>
                     <small>{user?.displayName}</small>
                     <Button variant="subtle" color="dark" leftSection={<LogOut size={15} />} onClick={() => void logout()}>
-                        Đăng xuất
+                        Sign out
                     </Button>
                 </footer>
             </aside>
-            <header className="admin-mobile-header"><Link className="brand" to="/admin">JEJU</Link><Burger opened={opened} onClick={open} aria-label="Mở menu quản trị" /></header>
-            <Drawer opened={opened} onClose={close} position="left" size="min(86%, 330px)" title={<Link className="brand" to="/admin" onClick={close}>JEJU</Link>} classNames={{ body: "admin-mobile-drawer" }}><nav><AdminNavigation onNavigate={close}/></nav><div className="admin-mobile-account"><small>{user?.displayName}</small><Button variant="light" color="red" leftSection={<LogOut size={15}/>} onClick={() => void logout()}>Đăng xuất</Button></div></Drawer>
+            <header className="admin-mobile-header"><Link className="brand" to="/admin">JEJU</Link><Burger opened={opened} onClick={open} aria-label="Open admin menu" /></header>
+            <Drawer opened={opened} onClose={close} position="left" size="min(86%, 330px)" title={<Link className="brand" to="/admin" onClick={close}>JEJU</Link>} classNames={{ body: "admin-mobile-drawer" }}><nav><AdminNavigation onNavigate={close}/></nav><div className="admin-mobile-account"><small>{user?.displayName}</small><Button variant="light" color="red" leftSection={<LogOut size={15}/>} onClick={() => void logout()}>Sign out</Button></div></Drawer>
             {children}
         </div>
     );

@@ -2,11 +2,9 @@ import { Avatar, Button, Menu, Text, UnstyledButton } from "@mantine/core";
 import { Bookmark, ChevronDown, LogIn, LogOut, UserRound } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
-import { useI18n } from "../../i18n/I18nContext";
 
 export default function UserMenu() {
     const { user, logout } = useAuth();
-    const { t } = useI18n();
     const navigate = useNavigate();
     if (!user)
         return (
@@ -17,7 +15,7 @@ export default function UserMenu() {
                 color="pink"
                 leftSection={<LogIn size={15} />}
             >
-                {t("nav.login")}
+                Sign in
             </Button>
         );
     const initials = user.displayName
@@ -38,7 +36,7 @@ export default function UserMenu() {
             <Menu.Target>
                 <UnstyledButton
                     className="user-menu-trigger"
-                    aria-label={t("user.account")}
+                    aria-label="Account"
                 >
                     <Avatar size={34} radius="xl" color="pink">
                         {initials}
@@ -60,14 +58,14 @@ export default function UserMenu() {
                     to="/tai-khoan"
                     leftSection={<UserRound size={16} />}
                 >
-                    {t("user.account")}
+                    Account
                 </Menu.Item>
                 <Menu.Item
                     component={Link}
                     to="/tai-khoan#lich-trinh"
                     leftSection={<Bookmark size={16} />}
                 >
-                    {t("user.itineraries")}
+                    Saved itineraries
                 </Menu.Item>
                 <Menu.Divider />
                 <Menu.Item
@@ -78,7 +76,7 @@ export default function UserMenu() {
                         navigate("/");
                     }}
                 >
-                    {t("user.logout")}
+                    Sign out
                 </Menu.Item>
             </Menu.Dropdown>
         </Menu>

@@ -1,7 +1,7 @@
 # Hướng dẫn sử dụng hệ thống Jeju
 
-> Phiên bản tài liệu: 0.28
-> Cập nhật gần nhất: 12/10/2026
+> Phiên bản tài liệu: 0.39
+> Cập nhật gần nhất: 27/10/2026
 > Phạm vi: môi trường phát triển local
 
 ## 1. Giới thiệu
@@ -17,7 +17,7 @@ Jeju là website hỗ trợ khám phá văn hóa và du lịch Jeju. Hệ thốn
 - Trang tài khoản cá nhân.
 - Khu vực quản trị dành cho Admin.
 - CMS sơ bộ để tạo, duyệt và lưu trữ nội dung.
-- Giao diện ba ngôn ngữ Việt, Anh và Hàn.
+- Giao diện và nội dung vận hành bằng tiếng Anh.
 - Kho dữ liệu mẫu địa điểm Jeju từ nguồn du lịch chính thức.
 
 ## 2. Cấu trúc dự án
@@ -25,7 +25,7 @@ Jeju là website hỗ trợ khám phá văn hóa và du lịch Jeju. Hệ thốn
 ```text
 Huy/
 ├── client/       React, TypeScript, Vite và Mantine UI
-├── backend/      NestJS, SQLite, Gemini API và Auth
+├── backend/      NestJS, SQLite, OpenAI-compatible API và Auth
 └── docs/         Tài liệu nghiệp vụ và hướng dẫn
 ```
 
@@ -47,7 +47,7 @@ Yêu cầu:
 
 - Node.js phiên bản 20 trở lên.
 - npm.
-- Gemini API key.
+- API key của OpenAI hoặc một gateway tương thích OpenAI.
 
 Kiểm tra phiên bản:
 
@@ -74,8 +74,9 @@ Copy-Item .env.example .env
 Cấu hình tối thiểu:
 
 ```env
-GEMINI_API_KEY=your_gemini_api_key
-GEMINI_MODEL=gemini-3.8-flash
+OPENAI_BASE_URL=https://gpt.teamsoclo.site/v1
+OPENAI_API_KEY=your_gateway_api_key
+OPENAI_MODEL=gpt-6.1-sol
 PORT=8787
 JWT_SECRET=replace_with_a_long_random_secret
 DATABASE_PATH=data/jeju-ai.sqlite
@@ -124,8 +125,9 @@ Kết quả hợp lệ:
 ```json
 {
   "ok": true,
-  "model": "gemini-3.8-flash",
-  "geminiConfigured": true
+  "model": "gpt-6.1-sol",
+  "aiBaseUrl": "https://gpt.teamsoclo.site/v1",
+  "openaiConfigured": true
 }
 ```
 
@@ -145,7 +147,7 @@ Truy cập:
 http://localhost:5173
 ```
 
-Frontend không cần `.env` cho Gemini. Trình duyệt gọi `/api`; Vite chuyển request sang backend. Gemini key chỉ được đặt trong `backend/.env`.
+Frontend không cần API key. Trình duyệt gọi `/api`; Vite chuyển request sang backend. API key chỉ được đặt trong `backend/.env`, tuyệt đối không đặt trong biến `VITE_*`.
 
 ## 6. Public routes
 
@@ -164,13 +166,20 @@ Các route này không yêu cầu đăng nhập.
 
 `/lich-trinh` không còn là public route. Nếu chưa đăng nhập, hệ thống chuyển sang `/dang-nhap` và quay lại lịch trình sau khi xác thực thành công.
 
-### Đa ngôn ngữ
+### Điều hướng sidebar
 
-- Chọn `VI`, `EN` hoặc `한국` trong nút ngôn ngữ trên header.
-- Lựa chọn được lưu ở `localStorage` với khóa `jeju-locale`.
-- Header, footer, menu người dùng, dữ liệu địa điểm và module blog đã hỗ trợ ba ngôn ngữ.
-- Khi đổi ngôn ngữ, `/van-hoa` và `/van-hoa/:slug` gọi lại API với query `locale=vi|en|ko`.
-- Nếu bài chưa có ngôn ngữ được chọn, API trả bản tiếng Việt với `translationFallback: true`; giao diện hiển thị thông báo fallback.
+- Trên desktop và tablet, một thanh icon rộng 70px luôn hiển thị bên trái; nút ba gạch mở rộng thanh này để hiện **About**, **Explore**, **Itinerary** và **Jeju Culture**.
+- Sidebar mặc định chỉ hiện icon; chọn một trang, bấm lại nút hoặc bấm vùng nền sẽ thu sidebar về thanh icon.
+- Chọn một mục để chuyển trực tiếp đến route tương ứng; mục hiện tại được đánh dấu.
+- Bên dưới **Jeju Culture** là submenu lấy động các bài đang ở trạng thái `published`; chọn tiêu đề để mở `/van-hoa/:slug`.
+- Trên tablet và mobile, sidebar được ẩn để giữ diện tích nội dung; menu drawer trong header tiếp tục đảm nhiệm điều hướng.
+
+### Ngôn ngữ giao diện
+
+- Hệ thống chỉ sử dụng tiếng Anh; header không còn bộ chọn ngôn ngữ.
+- Dữ liệu địa điểm public chỉ trả tên và mô tả tiếng Anh.
+- Bài Culture Journal có một phiên bản tiếng Anh duy nhất, không còn trạng thái bản dịch hoặc cơ chế fallback.
+- Khi nâng cấp database cũ, bản dịch tiếng Anh đã được duyệt (nếu có) được chuyển thành nội dung chính; bảng `content_translations` sau đó bị xóa.
 
 ### Carousel địa điểm
 
@@ -189,22 +198,50 @@ Các route này không yêu cầu đăng nhập.
 5. Chọn một hoặc nhiều sở thích.
 6. Chọn nhịp độ, phương tiện và nhập ngân sách dự kiến.
 7. Nhập yêu cầu trong khung chat.
-8. Sau khi AI trả lời, thành viên có thể chọn **Lưu lịch trình**.
+8. Với lịch trình theo ngày, xem các điểm chính và bản đồ ngay dưới câu trả lời. Marker `D1.1`, `D1.2`... thể hiện ngày và thứ tự ghé thăm; mỗi ngày dùng một màu riêng.
+9. Sau khi AI trả lời, thành viên có thể chọn **Lưu lịch trình**.
 
-Thông tin form được gửi kèm request chat và xuất hiện trong `contextUsed` của API response.
+Thông tin form được gửi kèm request chat và xuất hiện trong `contextUsed` của API response. Với câu trả lời dạng lịch trình theo ngày, response còn có `days`; mỗi phần tử chứa `day`, `title` và `places`. Mỗi địa điểm có thứ tự, tên, tọa độ, địa chỉ và nguồn phân giải. Giao diện hiển thị các địa điểm thành chip tương tác và bản đồ Leaflet/OpenStreetMap; chọn chip sẽ điền câu hỏi tìm hiểu thêm về địa điểm đó.
+
+Backend ưu tiên tọa độ đã có trong bảng `destinations`, sau đó tra Geoapify nếu đã cấu hình `GEOAPIFY_API_KEY`, rồi mới dùng Nominatim làm fallback. Kết quả thành công được lưu vào bảng cache `geocoded_places` để tránh gọi lại. Tọa độ không phân giải được vẫn xuất hiện trong danh sách nhưng không có marker. Đường nét đứt trên bản đồ chỉ nối điểm theo thứ tự ghé thăm, **không phải** chỉ đường theo đường bộ, không tính thời gian thực và không phản ánh giao thông. Nominatim công cộng chỉ phù hợp cho bản local/MVP có lưu cache.
+
+Để bật Geoapify, tạo API key trong Geoapify My Projects, copy key vào `backend/.env` rồi restart backend:
+
+```env
+GEOAPIFY_API_KEY=your_geoapify_key
+```
+
+Request Geoapify chạy ở backend nên không cần cấu hình HTTP Origin/CORS cho local. Không commit hoặc đưa key vào frontend. Khi deploy, nhập biến này trong dashboard hosting; chỉ thêm IP restriction nếu hosting cung cấp outbound IP cố định.
 
 Ví dụ:
 
 ```json
 {
+  "message": "Day-by-day itinerary in Markdown...",
+  "days": [
+    {
+      "day": 1,
+      "title": "Jeju City: local culture and coast",
+      "places": [
+        {
+          "order": 1,
+          "name": "Dongmun Traditional Market",
+          "latitude": 33.5116,
+          "longitude": 126.526,
+          "address": "Jeju-si, Jeju-do, South Korea",
+          "source": "nominatim"
+        }
+      ]
+    }
+  ],
   "contextUsed": {
-    "destination": "Jeju, Hàn Quốc",
+    "destination": "Jeju, South Korea",
     "startDate": null,
     "endDate": null,
-    "travelers": "2 người",
-    "interests": ["Văn hóa", "Thiên nhiên"],
-    "pace": "Cân bằng",
-    "transport": "Xe buýt + taxi",
+    "travelers": "2 travelers",
+    "interests": ["Culture", "Nature"],
+    "pace": "Balanced",
+    "transport": "Bus + taxi",
     "budget": "1500000"
   }
 }
@@ -358,9 +395,8 @@ Content được lưu trong SQLite. Bài đã tạo và trạng thái xuất b�
 1. Admin mở `/admin/content` và chọn **Tạo bài viết**.
 2. Nhập tiêu đề, slug, chủ đề, mô tả và tác giả.
 3. Soạn nội dung bằng TipTap: heading, chữ đậm/nghiêng, danh sách, trích dẫn và liên kết.
-   - Editor có ba tab **Tiếng Việt**, **English** và **한국어**.
-   - Tiếng Việt là bản bắt buộc và là nội dung fallback.
-   - Bản Anh/Hàn có thể để trống hoặc lưu với trạng thái `draft`/`reviewed`; chỉ bản `reviewed` có đủ tiêu đề và nội dung mới được trả cho public API.
+   - Editor chỉ có một bộ trường tiếng Anh gồm title, summary và body.
+   - Không còn tab hoặc trạng thái kiểm duyệt bản dịch.
 4. Trong khối **Ảnh bìa / background**, chọn một ảnh ngang riêng cho card và đầu trang chi tiết. Có thể xem trước, thay ảnh hoặc gỡ ảnh.
 5. Trong khối **Hình ảnh bài viết**, chọn **Tải ảnh lên**. Có thể chọn một hoặc nhiều tệp JPG, PNG, WebP hoặc GIF; mỗi tệp tối đa 5 MB.
    - Ảnh được chèn trực tiếp vào vị trí con trỏ trong nội dung.
@@ -453,13 +489,6 @@ DELETE /api/itineraries/:id
 ### Public content
 
 ```text
-GET /api/content/public?locale=vi|en|ko
-GET /api/content/public/:slug?locale=vi|en|ko
-```
-
-Response bài viết chứa `locale`, `requestedLocale` và `translationFallback` để frontend biết nội dung thực tế đang hiển thị.
-
-```text
 GET /api/content/public
 GET /api/content/public/:slug
 GET /api/media/files/:filename
@@ -528,15 +557,15 @@ npm run seed:test
 
 ## 14. Xử lý lỗi thường gặp
 
-### `geminiConfigured: false`
+### `openaiConfigured: false`
 
-Kiểm tra `GEMINI_API_KEY` trong `backend/.env`, sau đó restart backend.
+Kiểm tra `OPENAI_API_KEY` trong `backend/.env`, sau đó restart backend.
 
 ### Chat trả `502 Bad Gateway`
 
 - Xem lỗi chi tiết tại terminal backend.
-- Kiểm tra model trong `GEMINI_MODEL`.
-- Kiểm tra quota hoặc rate limit Google AI Studio.
+- Kiểm tra `OPENAI_BASE_URL` có kết thúc bằng `/v1` và model trong `OPENAI_MODEL` có nằm trong danh sách gateway cho phép.
+- Kiểm tra hạn mức, ngày hết hạn và rate limit của gateway.
 - Gửi lại request để loại trừ lỗi tạm thời.
 
 ### Frontend không gọi được backend
@@ -569,7 +598,7 @@ Hệ thống hiện chạy ổn ở môi trường local nhưng **chưa được
 - Deploy `client/` thành một Railway service có reverse proxy `/api` về backend để cookie đăng nhập vẫn cùng origin với giao diện.
 - Gắn Railway Volume cho SQLite và ảnh upload. Nếu không có volume, dữ liệu sẽ mất khi service được redeploy.
 
-Không commit `backend/.env`, Gemini/Resend API key, JWT secret, file SQLite hoặc thư mục upload. Root `.gitignore` đã loại trừ các dữ liệu này.
+Không commit `backend/.env`, OpenAI/gateway API key, Resend API key, JWT secret, file SQLite hoặc thư mục upload. Root `.gitignore` đã loại trừ các dữ liệu này.
 
 ### 15.2. Tạo Git repository local
 
@@ -613,8 +642,10 @@ Các giá trị này phải được nhập trong dashboard của Railway, khôn
 
 ```env
 NODE_ENV=production
-GEMINI_API_KEY=...
-GEMINI_MODEL=gemini-3.8-flash
+OPENAI_BASE_URL=https://gpt.teamsoclo.site/v1
+OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-6.1-sol
+GEOAPIFY_API_KEY=...
 JWT_SECRET=mot_chuoi_ngau_nhien_dai_va_rieng
 DATABASE_PATH=/data/jeju-ai.sqlite
 ADMIN_EMAIL=...
@@ -646,26 +677,26 @@ Không dùng `npm run preview` làm web server production lâu dài. Frontend đ
 
 ### 15.6. Checklist sau deploy
 
-- `/api/health` trả `ok: true` và `geminiConfigured: true`.
+- `/api/health` trả `ok: true` và `openaiConfigured: true`.
 - Đăng ký nhận được OTP qua email và đăng nhập bằng username.
 - Refresh trang ở các route sâu không trả 404.
 - Upload ảnh, redeploy backend rồi xác nhận ảnh và dữ liệu vẫn còn.
 - Admin vào được `/admin`; Member không vào được route Admin.
-- `JWT_SECRET`, `GEMINI_API_KEY` và `RESEND_API_KEY` không xuất hiện trong repository hoặc log frontend.
+- `JWT_SECRET`, `OPENAI_API_KEY` và `RESEND_API_KEY` không xuất hiện trong repository hoặc log frontend.
 - Chỉ chia sẻ URL frontend cho thành viên, không chia sẻ secret.
 
 ## 16. Chức năng chưa hoàn thiện
 
 - Chưa upload file lên object storage.
 - Offer tuyển chọn vẫn dùng nội dung mẫu phía frontend; carousel và trang khám phá đã lấy địa điểm qua API SQLite.
-- Google Places API và bản đồ được tạm hoãn; chưa có API key hoặc biến môi trường liên quan.
+- Bản đồ lịch trình hiện dùng Leaflet, tile OpenStreetMap và Nominatim công cộng, chưa có routing theo đường bộ, thời gian di chuyển, giao thông trực tiếp hoặc SLA production.
 - Quên mật khẩu và xác minh email đã có; gửi email thật phụ thuộc cấu hình SMTP hợp lệ của môi trường chạy.
 - Frontend đã có Docker/Caddy, SPA fallback và reverse proxy để deploy tạm; backend vẫn chưa đưa thư mục upload vào volume bền vững.
 - Chưa có refresh-token rotation hoặc thu hồi session theo thiết bị.
 - Editor và Moderator chưa có workspace riêng.
 - Chưa chỉnh sửa lịch trình theo từng ngày hoặc kéo thả hoạt động sau khi lưu.
-- Nội dung tĩnh ở một số section trang chủ vẫn chưa được đưa hết vào từ điển i18n.
-- Chưa có nút dùng AI tạo bản dịch nháp; Admin hiện nhập bản Anh/Hàn thủ công.
+- Chưa có quy trình biên tập tự động để chuyển nội dung cũ không có bản tiếng Anh sang tiếng Anh.
+- Hệ thống chỉ hỗ trợ tiếng Anh; chưa có kế hoạch bật lại bản địa hóa trong phiên bản hiện tại.
 
 ## 17. Quy tắc cập nhật tài liệu
 
@@ -684,6 +715,17 @@ Khi thêm hoặc thay đổi chức năng có ảnh hưởng đến người dù
 
 | Ngày | Phiên bản | Thay đổi |
 | --- | --- | --- |
+| 27/10/2026 | 0.39 | Tích hợp Geoapify Geocoding làm nguồn tọa độ ưu tiên sau database và trước Nominatim; bổ sung biến `GEOAPIFY_API_KEY` cùng hướng dẫn bảo vệ key. |
+| 27/10/2026 | 0.38 | Bắt AI xuất dữ liệu địa điểm cho đủ mọi ngày; bản đồ giữ các ngày chưa có tọa độ trong legend, báo số điểm chưa định vị và cho phép tra cứu lại kết quả thất bại thay vì cache vĩnh viễn. |
+| 27/10/2026 | 0.37 | Sửa dependency injection của bộ phân giải địa điểm; lỗi tải tọa độ không còn bị báo nhầm thành lỗi AI 502 và không làm mất nội dung lịch trình đã tạo. |
+| 27/10/2026 | 0.36 | Thêm bản đồ tương tác cho lịch trình: phân giải và cache tọa độ điểm chính, marker đánh số theo ngày/thứ tự, màu và đường nối riêng cho từng ngày; ghi rõ đường nối chưa phải routing đường bộ. |
+| 27/10/2026 | 0.35 | Bổ sung dữ liệu lịch trình có cấu trúc `days/mainPlaces` trong API chat; backend tách và kiểm tra JSON do AI sinh, frontend hiển thị địa điểm chính theo từng ngày thành chip tương tác. |
+| 27/10/2026 | 0.34 | Đổi sidebar off-canvas thành icon rail luôn hiển thị rộng 70px; nút ba gạch mở rộng rail để hiện nhãn và submenu Culture theo mẫu điều hướng tham chiếu. |
+| 27/10/2026 | 0.33 | Chuyển sidebar desktop sang dạng off-canvas mặc định thu gọn, mở bằng nút ba gạch và tự đóng sau khi điều hướng hoặc bấm vùng nền. |
+| 27/10/2026 | 0.32 | Thêm sidebar điều hướng cố định trên desktop, liên kết các trang chính và submenu động chứa những bài Jeju Culture đang xuất bản. |
+| 27/10/2026 | 0.31 | Thay Gemini bằng API OpenAI-compatible; thêm `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `OPENAI_MODEL`, chuyển Taewak sang Chat Completions và cập nhật health check/cấu hình triển khai. |
+| 27/10/2026 | 0.30 | Xóa toàn bộ tài khoản local ngoài Admin và rút gọn `seed:test` để chỉ tạo/cập nhật tài khoản `admin`; cập nhật lại danh sách tài khoản kiểm thử. |
+| 27/10/2026 | 0.29 | Gỡ i18n VI/EN/KO và bộ chọn ngôn ngữ; chuyển giao diện, Taewak, email/thông báo vận hành, dữ liệu địa điểm và CMS bài viết sang mô hình chỉ dùng tiếng Anh; bỏ query `locale`, fallback và bảng bản dịch bài viết. |
 | 12/10/2026 | 0.28 | Thêm Brevo HTTPS API làm lựa chọn mặc định trên production/Railway khi chưa có domain riêng; vẫn giữ `console` cho local và Resend cho môi trường đã cấu hình. |
 | 12/10/2026 | 0.27 | Phân loại lỗi gửi email là lỗi dịch vụ `503` thay vì lỗi request `400`; chuyển lỗi sandbox Resend thành hướng dẫn tiếng Việt và không trả địa chỉ email chủ tài khoản trong thông báo. |
 | 12/10/2026 | 0.26 | Sửa lỗi Resend do `RESEND_FROM` dùng domain mẫu; chuẩn hóa và kiểm tra cấu hình email, đồng thời làm rõ lỗi trả về từ Resend. |

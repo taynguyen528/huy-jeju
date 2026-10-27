@@ -7,12 +7,12 @@ export class DestinationService {
 
   findAll(featured?: string) {
     const where = featured === 'true' ? 'WHERE featured = 1' : ''
-    return this.database.connection.prepare(`SELECT * FROM destinations ${where} ORDER BY featured DESC, name_vi ASC`).all()
+    return this.database.connection.prepare(`SELECT * FROM destinations ${where} ORDER BY featured DESC, name ASC`).all()
   }
 
   findBySlug(slug: string) {
     const item = this.database.connection.prepare('SELECT * FROM destinations WHERE slug = ?').get(slug)
-    if (!item) throw new NotFoundException('Không tìm thấy địa điểm')
+    if (!item) throw new NotFoundException('Destination not found.')
     return item
   }
 }

@@ -61,7 +61,7 @@ export default function RichTextEditor({
             | string
             | undefined;
         const url = window.prompt(
-            "Nhập đường dẫn liên kết",
+            "Enter a link URL",
             previous || "https://",
         );
         if (url === null) return;
@@ -118,19 +118,19 @@ export default function RichTextEditor({
         <div className={`rich-editor ${error ? "has-error" : ""}`}>
             <Group className="rich-editor-toolbar" gap={4} wrap="wrap">
                 {tool(
-                    "In đậm",
+                    "Bold",
                     editor.isActive("bold"),
                     () => editor.chain().focus().toggleBold().run(),
                     <Bold size={16} />,
                 )}
                 {tool(
-                    "In nghiêng",
+                    "Italic",
                     editor.isActive("italic"),
                     () => editor.chain().focus().toggleItalic().run(),
                     <Italic size={16} />,
                 )}
                 {tool(
-                    "Tiêu đề",
+                    "Heading",
                     editor.isActive("heading", { level: 2 }),
                     () =>
                         editor
@@ -141,38 +141,38 @@ export default function RichTextEditor({
                     <Heading2 size={16} />,
                 )}
                 {tool(
-                    "Danh sách",
+                    "Bulleted list",
                     editor.isActive("bulletList"),
                     () => editor.chain().focus().toggleBulletList().run(),
                     <List size={16} />,
                 )}
                 {tool(
-                    "Danh sách số",
+                    "Numbered list",
                     editor.isActive("orderedList"),
                     () => editor.chain().focus().toggleOrderedList().run(),
                     <ListOrdered size={16} />,
                 )}
                 {tool(
-                    "Trích dẫn",
+                    "Block quote",
                     editor.isActive("blockquote"),
                     () => editor.chain().focus().toggleBlockquote().run(),
                     <Quote size={16} />,
                 )}
                 {tool(
-                    "Liên kết",
+                    "Link",
                     editor.isActive("link"),
                     setLink,
                     <Link2 size={16} />,
                 )}
                 <span className="rich-editor-spacer" />
                 {tool(
-                    "Hoàn tác",
+                    "Undo",
                     false,
                     () => editor.chain().focus().undo().run(),
                     <Undo2 size={16} />,
                 )}
                 {tool(
-                    "Làm lại",
+                    "Redo",
                     false,
                     () => editor.chain().focus().redo().run(),
                     <Redo2 size={16} />,
@@ -181,11 +181,11 @@ export default function RichTextEditor({
             <div className="rich-editor-upload">
                 <div>
                     <Text fw={700} size="sm">
-                        Hình ảnh bài viết
+                        Article images
                     </Text>
                     <Text size="xs" c="dimmed">
-                        Chọn một hoặc nhiều ảnh JPG, PNG, WebP hoặc GIF · tối đa
-                        5 MB/ảnh.
+                        Select one or more JPG, PNG, WebP, or GIF files · up to
+                        5 MB each.
                     </Text>
                 </div>
                 <Button
@@ -196,7 +196,7 @@ export default function RichTextEditor({
                     loading={uploading}
                     onClick={() => inputRef.current?.click()}
                 >
-                    Tải ảnh lên
+                    Upload images
                 </Button>
             </div>
             {uploadError && (

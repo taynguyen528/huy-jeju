@@ -2,11 +2,12 @@ import {
     BadGatewayException,
     BadRequestException,
     Controller,
+    Inject,
     Post,
     ServiceUnavailableException,
     Body,
 } from "@nestjs/common";
-import { GoogleGenAI } from "@google/genai";
+import { PlaceResolverService } from "../maps/place-resolver.service.js";
 
 type IncomingMessage = { role: "user" | "assistant"; content: string };
 type TripDraft = {
@@ -31,16 +32,46 @@ type TripContext = {
     budget: string | null;
 };
 
+type ItineraryDay = { day: number; title: string; mainPlaces: string[] };
+
+function extractItineraryData(raw: string): { message: string; days: ItineraryDay[] } {
+    const block = raw.match(/<itinerary_data>\s*(?:```json\s*)?([\s\S]*?)(?:\s*```)?\s*<\/itinerary_data>/i);
+    if (!block) return { message: raw.trim(), days: [] };
+
+    const message = raw.replace(block[0], "").trim();
+    try {
+        const parsed = JSON.parse(block[1]) as { days?: unknown };
+        if (!Array.isArray(parsed.days)) return { message, days: [] };
+        const days = parsed.days.flatMap((value): ItineraryDay[] => {
+            if (!value || typeof value !== "object") return [];
+            const candidate = value as { day?: unknown; title?: unknown; mainPlaces?: unknown };
+            const day = Number(candidate.day);
+            if (!Number.isInteger(day) || day < 1 || typeof candidate.title !== "string" || !Array.isArray(candidate.mainPlaces)) return [];
+            const mainPlaces = [...new Set(candidate.mainPlaces
+                .filter((place): place is string => typeof place === "string")
+                .map((place) => place.trim())
+                .filter(Boolean))].slice(0, 12);
+            if (!mainPlaces.length) return [];
+            return [{ day, title: candidate.title.trim().slice(0, 160), mainPlaces }];
+        }).sort((a, b) => a.day - b.day).slice(0, 30);
+        return { message, days };
+    } catch {
+        return { message, days: [] };
+    }
+}
+
 @Controller("chat")
 export class ChatController {
+    constructor(@Inject(PlaceResolverService) private readonly placeResolver: PlaceResolverService) {}
+
     @Post()
     async chat(
         @Body() body: { messages?: IncomingMessage[]; trip?: TripDraft },
     ) {
-        const apiKey = process.env.GEMINI_API_KEY;
+        const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey)
             throw new ServiceUnavailableException(
-                "Chưa cấu hình GEMINI_API_KEY trong file .env.",
+                "OPENAI_API_KEY is not configured in the .env file.",
             );
 
         const messages = Array.isArray(body?.messages) ? body.messages : [];
@@ -52,19 +83,13 @@ export class ChatController {
                     typeof item.content === "string",
             )
             .slice(-16)
-            .map((item) => ({
-                role:
-                    item.role === "assistant"
-                        ? ("model" as const)
-                        : ("user" as const),
-                parts: [{ text: item.content.slice(0, 5000) }],
-            }));
+            .map((item) => ({ role: item.role, content: item.content.slice(0, 5000) }));
 
         if (!validMessages.length || validMessages.at(-1)?.role !== "user")
-            throw new BadRequestException("Tin nhắn không hợp lệ.");
+            throw new BadRequestException("Invalid message.");
 
         const contextUsed: TripContext = {
-            destination: trip.destination?.trim() || "Jeju, Hàn Quốc",
+            destination: trip.destination?.trim() || "Jeju, South Korea",
             startDate: trip.startDate?.trim() || null,
             endDate: trip.endDate?.trim() || null,
             travelers: trip.travelers?.trim() || null,
@@ -82,51 +107,87 @@ export class ChatController {
         };
 
         const context = [
-            `Điểm đến: ${contextUsed.destination}`,
-            `Ngày đi: ${contextUsed.startDate || "chưa xác định"}`,
-            `Ngày về: ${contextUsed.endDate || "chưa xác định"}`,
-            `Số người: ${contextUsed.travelers || "chưa xác định"}`,
-            `Sở thích: ${contextUsed.interests.length ? contextUsed.interests.join(", ") : "chưa xác định"}`,
-            `Nhịp độ: ${contextUsed.pace || "chưa xác định"}`,
-            `Phương tiện: ${contextUsed.transport || "chưa xác định"}`,
-            `Ngân sách: ${contextUsed.budget || "chưa xác định"}`,
+            `Destination: ${contextUsed.destination}`,
+            `Start date: ${contextUsed.startDate || "not specified"}`,
+            `End date: ${contextUsed.endDate || "not specified"}`,
+            `Travelers: ${contextUsed.travelers || "not specified"}`,
+            `Interests: ${contextUsed.interests.length ? contextUsed.interests.join(", ") : "not specified"}`,
+            `Pace: ${contextUsed.pace || "not specified"}`,
+            `Transport: ${contextUsed.transport || "not specified"}`,
+            `Budget: ${contextUsed.budget || "not specified"}`,
         ].join("\n");
 
+        const model = process.env.OPENAI_MODEL || "gpt-6.1-sol";
+        let rawMessage: string;
         try {
-            const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
-            const result = await new GoogleGenAI({
-                apiKey,
-            }).models.generateContent({
-                model,
-                contents: validMessages,
-                config: {
-                    temperature: 0.7,
-                    maxOutputTokens: 6000,
-                    systemInstruction: `Bạn là Taewak, trợ lý lập lịch trình du lịch Jeju bằng tiếng Việt.
+            const baseUrl = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "");
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 60_000);
+            const response = await fetch(`${baseUrl}/chat/completions`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${apiKey}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    model,
+                    messages: [
+                        { role: "system", content: `You are Taewak, an English-language Jeju travel itinerary assistant.
 
-THÔNG TIN CHUYẾN ĐI HIỆN TẠI TỪ FORM:
+CURRENT TRIP DETAILS FROM THE FORM:
 ${context}
 
-Quy tắc sử dụng thông tin:
-- Luôn coi dữ liệu từ form phía trên là nguồn thông tin hiện tại và ưu tiên hơn dữ liệu cũ trong hội thoại.
-- Phải điều chỉnh gợi ý theo điểm đến, số người và các sở thích đã chọn.
-- Không hỏi lại trường đã có giá trị.
-- Nếu ngày đi hoặc ngày về chưa xác định, vẫn có thể đề xuất lịch trình theo số ngày người dùng yêu cầu và chỉ ghi rõ ngày cụ thể chưa được chọn.
-- Nếu người dùng thay đổi form, áp dụng giá trị mới ngay ở câu trả lời kế tiếp.
-- Khi người dùng yêu cầu lịch trình, trình bày theo từng ngày thực tế nếu đã có ngày đi và về; mỗi hoạt động cần có khung giờ, khu vực, thời lượng, gợi ý di chuyển và chi phí ước tính.
-- Cuối lịch trình phải có phần tổng hợp ngân sách, lưu ý đặt trước và checklist chuẩn bị.
-- Không xếp hoạt động trùng giờ hoặc lịch di chuyển phi thực tế. Nếu thiếu dữ liệu cập nhật, phải ghi rõ cần kiểm tra lại.
-- Trả lời thân thiện, rõ ràng và hữu ích. Không bịa giờ mở cửa, giá hoặc dữ liệu thay đổi theo thời gian.`,
-                },
+Information rules:
+- Treat the form data above as the current source of truth and prioritize it over older conversation details.
+- Tailor suggestions to the destination, party size, and selected interests.
+- Do not ask again for a field that already has a value.
+- If travel dates are unspecified, you may still propose an itinerary for the requested number of days; state that exact dates have not been selected.
+- Apply form changes immediately in the next response.
+- For itinerary requests with dates, organize the plan by actual day. Each activity needs a time window, area, duration, transport suggestion, and estimated cost.
+- End itineraries with a budget summary, advance-booking notes, and preparation checklist.
+- Do not overlap activities or propose unrealistic travel times. Clearly flag details that require current verification.
+- Reply in friendly, clear, helpful English. Never invent opening hours, prices, or other time-sensitive data.
+
+Machine-readable itinerary data:
+- When your answer contains a day-by-day itinerary, append exactly one JSON block after the human-readable Markdown.
+- Use this exact wrapper and valid JSON with no commentary after it:
+<itinerary_data>
+{"days":[{"day":1,"title":"Short day title","mainPlaces":["Specific place name","Specific place name"]}]}
+</itinerary_data>
+- Include exactly one day object for every day shown in the human-readable itinerary. Never omit later days.
+- Include 2-5 main places per day in visit order whenever the itinerary contains that many named attractions.
+- Include only named destinations or attractions that the traveler intentionally visits. Exclude meals, hotels, generic areas, transport stops, and vague activities.
+- If the answer is not a day-by-day itinerary, do not append the block.` },
+                        ...validMessages,
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 6000,
+                }),
+                signal: controller.signal,
             });
-            const message = result.text?.trim();
-            if (!message) throw new Error("Empty response");
-            return { message, model, contextUsed };
+            clearTimeout(timeout);
+            const payload = await response.json() as {
+                choices?: Array<{ message?: { content?: string } }>;
+                error?: { message?: string };
+            };
+            if (!response.ok) throw new Error(payload.error?.message || `Gateway returned HTTP ${response.status}`);
+            const content = payload.choices?.[0]?.message?.content?.trim();
+            if (!content) throw new Error("Empty response");
+            rawMessage = content;
         } catch (error) {
             console.error(error);
             throw new BadGatewayException(
-                "Gemini đang không phản hồi. Vui lòng kiểm tra API key, model hoặc thử lại.",
+                "The AI gateway is not responding. Check OPENAI_BASE_URL, OPENAI_API_KEY, and OPENAI_MODEL, then try again.",
             );
+        }
+
+        const { message, days } = extractItineraryData(rawMessage);
+        try {
+            const resolvedDays = await this.placeResolver.resolveDays(days);
+            return { message, days: resolvedDays, model, contextUsed };
+        } catch (error) {
+            console.error("Unable to resolve itinerary map places:", error);
+            return { message, days: [], model, contextUsed, mapWarning: "The itinerary was created, but map locations could not be loaded." };
         }
     }
 }

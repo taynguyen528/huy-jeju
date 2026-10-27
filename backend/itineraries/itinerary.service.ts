@@ -92,7 +92,7 @@ export class ItineraryService {
         const row = this.database.connection
             .prepare("SELECT * FROM itineraries WHERE id = ? AND owner_id = ?")
             .get(id, ownerId) as ItineraryRow | undefined;
-        if (!row) throw new NotFoundException("Không tìm thấy lịch trình.");
+        if (!row) throw new NotFoundException("Itinerary not found.");
         return this.toItem(row);
     }
 

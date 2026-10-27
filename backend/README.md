@@ -1,6 +1,6 @@
 # Jeju Backend
 
-NestJS API độc lập cho chat Gemini, quản lý content và xác thực người dùng.
+NestJS API độc lập cho chat qua OpenAI-compatible API, quản lý content và xác thực người dùng.
 
 ```powershell
 npm install

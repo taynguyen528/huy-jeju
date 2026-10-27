@@ -6,7 +6,7 @@ import type {
     SavedItinerary,
     Destination,
     ContentInput,
-    ContentLocale,
+    ItineraryDay,
 } from "./types";
 
 export type AuthUser = {
@@ -20,6 +20,7 @@ export type AuthUser = {
 
 type ChatResponse = {
     message: string;
+    days: ItineraryDay[];
     model: string;
     contextUsed: {
         destination: string;
@@ -37,7 +38,7 @@ async function json<T>(url: string, options?: RequestInit): Promise<T> {
     const response = await fetch(url, { credentials: "include", ...options });
     const payload = (await response.json()) as T & { message?: string };
     if (!response.ok)
-        throw new Error(payload.message || "Không thể kết nối máy chủ.");
+        throw new Error(payload.message || "Unable to connect to the server.");
     return payload;
 }
 
@@ -103,15 +104,9 @@ export const updateAdminUser = (
         body: JSON.stringify(input),
     });
 
-export const getPublicContent = (locale: ContentLocale = "vi") =>
-    json<ContentItem[]>(`/api/content/public?locale=${locale}`);
-export const getPublicContentBySlug = (
-    slug: string,
-    locale: ContentLocale = "vi",
-) =>
-    json<ContentItem>(
-        `/api/content/public/${encodeURIComponent(slug)}?locale=${locale}`,
-    );
+export const getPublicContent = () => json<ContentItem[]>("/api/content/public");
+export const getPublicContentBySlug = (slug: string) =>
+    json<ContentItem>(`/api/content/public/${encodeURIComponent(slug)}`);
 export const getContent = () => json<ContentItem[]>("/api/content");
 export const createContent = (item: ContentInput) =>
     json<ContentItem>("/api/content", {
@@ -199,7 +194,7 @@ export async function sendChatMessage(
         error?: string;
     };
     if (!response.ok) {
-        throw new Error(payload.error || "Không thể kết nối với trợ lý AI.");
+        throw new Error(payload.error || "Unable to connect to the AI assistant.");
     }
     return payload;
 }

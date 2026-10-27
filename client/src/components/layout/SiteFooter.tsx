@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
-import { useI18n } from "../../i18n/I18nContext";
 export default function SiteFooter() {
-    const { t } = useI18n();
     return (
         <footer className="editorial-footer">
             <div>
@@ -9,7 +7,7 @@ export default function SiteFooter() {
                     JEJU
                 </Link>
                 <p>
-                    {t("footer.mission")
+                    {"Travel slower. Look deeper.\nPreserve the stories of Jeju."
                         .split("\n")
                         .map((line) => (
                             <span key={line}>
@@ -21,18 +19,18 @@ export default function SiteFooter() {
             </div>
             <div className="footer-links">
                 <div>
-                    <strong>{t("footer.explore").toUpperCase()}</strong>
-                    <Link to="/kham-pha">{t("nav.explore")}</Link>
-                    <Link to="/lich-trinh">{t("nav.planner")}</Link>
+                    <strong>EXPLORE</strong>
+                    <Link to="/kham-pha">Explore</Link>
+                    <Link to="/lich-trinh">Itinerary</Link>
                 </div>
                 <div>
-                    <strong>{t("footer.journal").toUpperCase()}</strong>
-                    <Link to="/van-hoa">{t("nav.culture")}</Link>
-                    <Link to="/gioi-thieu">{t("nav.about")}</Link>
+                    <strong>JOURNAL</strong>
+                    <Link to="/van-hoa">Jeju Culture</Link>
+                    <Link to="/gioi-thieu">About</Link>
                 </div>
             </div>
             <div className="footer-bottom">
-                <span>© 2026 JEJU — {t("footer.rights")}</span>
+                <span>© 2026 JEJU — ALL RIGHTS RESERVED</span>
                 <span>MADE WITH CARE FOR JEJU</span>
             </div>
         </footer>

@@ -26,7 +26,7 @@ export class PresenceController {
         },
     ) {
         if (!body.visitorId || !/^[a-zA-Z0-9-]{10,80}$/.test(body.visitorId))
-            throw new BadRequestException("Visitor ID không hợp lệ.");
+            throw new BadRequestException("Invalid visitor ID.");
         const audience = audiences.includes(
             body.audience as (typeof audiences)[number],
         )
