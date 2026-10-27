@@ -1,9 +1,25 @@
 export type ChatRole = 'user' | 'assistant'
 
+export type ItineraryDay = {
+  day: number
+  title: string
+  places: ItineraryPlace[]
+}
+
+export type ItineraryPlace = {
+  order: number
+  name: string
+  latitude: number | null
+  longitude: number | null
+  address: string | null
+  source: 'database' | 'geoapify' | 'nominatim' | 'unresolved'
+}
+
 export type ChatMessage = {
   id: string
   role: ChatRole
   content: string
+  days?: ItineraryDay[]
 }
 
 export type TripDraft = {
@@ -36,9 +52,6 @@ export type SavedItinerary = {
 }
 
 export type ContentStatus = 'draft' | 'review' | 'published' | 'archived'
-export type ContentLocale = 'vi' | 'en' | 'ko'
-export type ContentTranslation = { title: string; excerpt: string; body: string; translationStatus: 'draft' | 'reviewed' }
-
 export type ContentItem = {
   id: string
   title: string
@@ -50,17 +63,12 @@ export type ContentItem = {
   author: string
   coverImageUrl: string
   updatedAt: string
-  locale: ContentLocale
-  requestedLocale: ContentLocale
-  translationFallback: boolean
-  translations?: Partial<Record<ContentLocale, ContentTranslation>>
 }
 
-export type ContentInput = Pick<ContentItem, 'slug' | 'topic' | 'status' | 'author' | 'coverImageUrl'> & { translations: Partial<Record<ContentLocale, ContentTranslation>> }
+export type ContentInput = Pick<ContentItem, 'title' | 'slug' | 'excerpt' | 'body' | 'topic' | 'status' | 'author' | 'coverImageUrl'>
 
 export type Destination = {
-  id: string; slug: string; name_vi: string; name_en: string; name_ko: string
-  description_vi: string; description_en: string; description_ko: string
+  id: string; slug: string; name: string; description: string
   category: string; region: string; address: string; latitude: number | null; longitude: number | null
   image_key: string; source_url: string; featured: number
 }

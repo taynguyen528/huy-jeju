@@ -5,11 +5,6 @@ import { DatabaseService } from '../database/database.service.js'
 
 const accounts = [
   { username:'admin', name: 'Jeju Admin', email: 'pttnguyen528@gmail.com', password: 'Pttn2002@', roles: ['ADMIN', 'MEMBER'] },
-  { username:'editor', name: 'Minji Editor', email: 'editor@jeju.local', password: 'Editor@2026', roles: ['EDITOR', 'MEMBER'] },
-  { username:'moderator', name: 'Hana Moderator', email: 'moderator@jeju.local', password: 'Moderator@2026', roles: ['MODERATOR', 'MEMBER'] },
-  { username:'huy', name: 'Huy Traveler', email: 'huy@jeju.local', password: 'Member@2026', roles: ['MEMBER'] },
-  { username:'linh', name: 'Linh Explorer', email: 'linh@jeju.local', password: 'Member@2026', roles: ['MEMBER'] },
-  { username:'nam', name: 'Nam Photographer', email: 'nam@jeju.local', password: 'Member@2026', roles: ['MEMBER'] },
 ]
 
 const database = new DatabaseService()

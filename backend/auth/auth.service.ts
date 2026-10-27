@@ -93,9 +93,9 @@ export class AuthService implements OnModuleInit {
             | { email: string; username: string }
             | undefined;
         if (exists?.email.toLowerCase() === email)
-            throw new ConflictException("Email này đã được sử dụng.");
+            throw new ConflictException("This email is already in use.");
         if (exists)
-            throw new ConflictException("Tên đăng nhập này đã được sử dụng.");
+            throw new ConflictException("This username is already in use.");
         const id = randomUUID();
         const timestamp = new Date().toISOString();
         const passwordHash = await bcrypt.hash(input.password, 12);
@@ -141,8 +141,8 @@ export class AuthService implements OnModuleInit {
             console.error("[EMAIL] Verification email failed:", detail);
             throw new ServiceUnavailableException(
                 process.env.NODE_ENV === "production"
-                    ? "Không thể gửi email xác nhận. Vui lòng kiểm tra cấu hình dịch vụ email và thử lại."
-                    : `Không thể gửi email xác nhận: ${detail}`,
+                    ? "Unable to send the verification email. Check the email service configuration and try again."
+                    : `Unable to send the verification email: ${detail}`,
                 { cause: error },
             );
         }
@@ -155,11 +155,11 @@ export class AuthService implements OnModuleInit {
             .get(username, "ACTIVE") as UserRow | undefined;
         if (!row || !(await bcrypt.compare(input.password, row.password_hash)))
             throw new UnauthorizedException(
-                "Tên đăng nhập hoặc mật khẩu không đúng.",
+                "Incorrect username or password.",
             );
         if (!row.email_verified)
             throw new UnauthorizedException(
-                "Email chưa được xác nhận. Vui lòng hoàn tất đăng ký hoặc yêu cầu gửi lại mã.",
+                "Email is not verified. Complete registration or request a new code.",
             );
         const user = this.findSafeUser(row.id);
         return { user, token: this.sign(user) };
@@ -172,7 +172,7 @@ export class AuthService implements OnModuleInit {
             .get(email) as UserRow | undefined;
         if (!user)
             throw new BadRequestException(
-                "Mã xác nhận không hợp lệ hoặc đã hết hạn.",
+                "The verification code is invalid or expired.",
             );
         if (user.email_verified) {
             const safe = this.findSafeUser(user.id);
@@ -185,11 +185,11 @@ export class AuthService implements OnModuleInit {
             | undefined;
         if (!record || new Date(record.expires_at).getTime() < Date.now())
             throw new BadRequestException(
-                "Mã xác nhận đã hết hạn. Hãy yêu cầu mã mới.",
+                "The verification code has expired. Request a new code.",
             );
         if (record.attempts >= 5)
             throw new HttpException(
-                "Bạn đã nhập sai quá nhiều lần. Hãy yêu cầu mã mới.",
+                "Too many incorrect attempts. Request a new code.",
                 HttpStatus.TOO_MANY_REQUESTS,
             );
         if (this.hashCode(input.code) !== record.code_hash) {
@@ -198,7 +198,7 @@ export class AuthService implements OnModuleInit {
                     "UPDATE email_verification_codes SET attempts=attempts+1 WHERE user_id=?",
                 )
                 .run(user.id);
-            throw new BadRequestException("Mã xác nhận không đúng.");
+            throw new BadRequestException("Incorrect verification code.");
         }
         this.db.connection.transaction(() => {
             this.db.connection
@@ -222,7 +222,7 @@ export class AuthService implements OnModuleInit {
         if (!user) return { ok: true, email, expiresInSeconds: 600 };
         if (user.email_verified)
             throw new BadRequestException(
-                "Email này đã được xác nhận. Bạn có thể đăng nhập.",
+                "This email is already verified. You can sign in.",
             );
         const delivery = await this.issueVerificationCode(
             user.id,
@@ -254,7 +254,7 @@ export class AuthService implements OnModuleInit {
             Date.now() - new Date(existing.last_sent_at).getTime() < 60_000
         )
             throw new HttpException(
-                "Vui lòng chờ 60 giây trước khi gửi lại mã.",
+                "Wait 60 seconds before requesting another code.",
                 HttpStatus.TOO_MANY_REQUESTS,
             );
         const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
@@ -292,7 +292,7 @@ export class AuthService implements OnModuleInit {
             .get(email) as UserRow | undefined;
         if (!user)
             throw new BadRequestException(
-                "Mã đặt lại không hợp lệ hoặc đã hết hạn.",
+                "The reset code is invalid or expired.",
             );
         const record = this.db.connection
             .prepare("SELECT * FROM password_reset_codes WHERE user_id=?")
@@ -301,11 +301,11 @@ export class AuthService implements OnModuleInit {
             | undefined;
         if (!record || new Date(record.expires_at).getTime() < Date.now())
             throw new BadRequestException(
-                "Mã đặt lại đã hết hạn. Hãy yêu cầu mã mới.",
+                "The reset code has expired. Request a new code.",
             );
         if (record.attempts >= 5)
             throw new HttpException(
-                "Bạn đã nhập sai quá nhiều lần. Hãy yêu cầu mã mới.",
+                "Too many incorrect attempts. Request a new code.",
                 HttpStatus.TOO_MANY_REQUESTS,
             );
         if (this.hashCode(input.code) !== record.code_hash) {
@@ -314,7 +314,7 @@ export class AuthService implements OnModuleInit {
                     "UPDATE password_reset_codes SET attempts=attempts+1 WHERE user_id=?",
                 )
                 .run(user.id);
-            throw new BadRequestException("Mã đặt lại không đúng.");
+            throw new BadRequestException("Incorrect reset code.");
         }
         const passwordHash = await bcrypt.hash(input.password, 12);
         this.db.connection.transaction(() => {
@@ -337,7 +337,7 @@ export class AuthService implements OnModuleInit {
             );
         } catch {
             throw new UnauthorizedException(
-                "Phiên đăng nhập không hợp lệ hoặc đã hết hạn.",
+                "The session is invalid or expired.",
             );
         }
     }
@@ -352,10 +352,10 @@ export class AuthService implements OnModuleInit {
         const row = this.db.connection
             .prepare("SELECT * FROM users WHERE id = ?")
             .get(id) as UserRow | undefined;
-        if (!row) throw new UnauthorizedException("Không tìm thấy tài khoản.");
+        if (!row) throw new UnauthorizedException("Account not found.");
         if (row.status !== "ACTIVE")
             throw new UnauthorizedException(
-                "Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.",
+                "This account has been deactivated. Contact an administrator.",
             );
         const roles = this.db.connection
             .prepare(
@@ -363,7 +363,7 @@ export class AuthService implements OnModuleInit {
             )
             .all(id) as { code: string }[];
         if (!row.email_verified)
-            throw new UnauthorizedException("Email chưa được xác nhận.");
+            throw new UnauthorizedException("Email is not verified.");
         return {
             id: row.id,
             email: row.email,
@@ -390,7 +390,7 @@ export class AuthService implements OnModuleInit {
             Date.now() - new Date(existing.last_sent_at).getTime() < 60_000
         )
             throw new HttpException(
-                "Vui lòng chờ 60 giây trước khi gửi lại mã.",
+                "Wait 60 seconds before requesting another code.",
                 HttpStatus.TOO_MANY_REQUESTS,
             );
         const code = String(randomInt(0, 1_000_000)).padStart(6, "0");

@@ -6,8 +6,9 @@ export class HealthController {
   check() {
     return {
       ok: true,
-      model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
-      geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
+      model: process.env.OPENAI_MODEL || 'gpt-6.1-sol',
+      aiBaseUrl: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+      openaiConfigured: Boolean(process.env.OPENAI_API_KEY),
     }
   }
 }

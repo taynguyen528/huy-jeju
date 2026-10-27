@@ -25,24 +25,24 @@ export class AdminController {
   @Patch('users/:id')
   updateUser(@Param('id') id: string, @Body() body: { status?: string; roles?: string[] }, @Req() request: AdminRequest) {
     const target = this.db.connection.prepare('SELECT id, status FROM users WHERE id = ?').get(id) as { id: string; status: string } | undefined
-    if (!target) throw new NotFoundException('Không tìm thấy tài khoản.')
+    if (!target) throw new NotFoundException('Account not found.')
     const nextStatus = body.status
-    if (nextStatus !== undefined && !['ACTIVE', 'INACTIVE'].includes(nextStatus)) throw new BadRequestException('Trạng thái không hợp lệ.')
+    if (nextStatus !== undefined && !['ACTIVE', 'INACTIVE'].includes(nextStatus)) throw new BadRequestException('Invalid status.')
     const nextRoles = body.roles
     if (nextRoles !== undefined) {
-      if (!Array.isArray(nextRoles)) throw new BadRequestException('Danh sách vai trò phải là một mảng.')
+      if (!Array.isArray(nextRoles)) throw new BadRequestException('Roles must be an array.')
       const unique = [...new Set(nextRoles)]
-      if (!unique.length || unique.some((role) => !allowedRoles.includes(role as RoleCode))) throw new BadRequestException('Danh sách vai trò không hợp lệ.')
+      if (!unique.length || unique.some((role) => !allowedRoles.includes(role as RoleCode))) throw new BadRequestException('Invalid role list.')
       body.roles = unique
     }
     if (id === request.authUser.id && (nextStatus === 'INACTIVE' || (nextRoles && !nextRoles.includes('ADMIN')))) {
-      throw new ForbiddenException('Bạn không thể tự vô hiệu hóa hoặc tự gỡ quyền Admin.')
+      throw new ForbiddenException('You cannot deactivate yourself or remove your own Administrator role.')
     }
     const currentRoles = this.db.connection.prepare('SELECT r.code FROM roles r JOIN user_roles ur ON ur.role_id=r.id WHERE ur.user_id=?').all(id) as { code: string }[]
     const removesAdmin = currentRoles.some(({ code }) => code === 'ADMIN') && ((nextRoles && !nextRoles.includes('ADMIN')) || nextStatus === 'INACTIVE')
     if (removesAdmin) {
       const activeAdmins = this.db.connection.prepare("SELECT COUNT(DISTINCT u.id) count FROM users u JOIN user_roles ur ON ur.user_id=u.id JOIN roles r ON r.id=ur.role_id WHERE u.status='ACTIVE' AND r.code='ADMIN'").get() as { count: number }
-      if (activeAdmins.count <= 1) throw new ForbiddenException('Hệ thống phải còn ít nhất một Admin đang hoạt động.')
+      if (activeAdmins.count <= 1) throw new ForbiddenException('At least one active Administrator must remain.')
     }
     const timestamp = new Date().toISOString()
     this.db.connection.transaction(() => {

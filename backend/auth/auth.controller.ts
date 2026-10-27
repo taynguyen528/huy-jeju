@@ -32,5 +32,5 @@ export class AuthController {
   logout(@Res({ passthrough: true }) response: Response) { response.clearCookie(cookieName, { path: '/' }); return { ok: true } }
 
   @Get('me')
-  me(@Req() request: Request) { const token = request.cookies?.[cookieName] as string | undefined; if (!token) throw new UnauthorizedException('Bạn chưa đăng nhập.'); return { user: this.auth.verify(token) } }
+  me(@Req() request: Request) { const token = request.cookies?.[cookieName] as string | undefined; if (!token) throw new UnauthorizedException('You are not signed in.'); return { user: this.auth.verify(token) } }
 }

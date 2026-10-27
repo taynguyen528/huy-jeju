@@ -44,12 +44,11 @@ export default function HomePage() {
                         </h1>
                         <div className="hero-intro">
                             <p>
-                                Một hành trình được biên tập riêng cho bạn —
-                                giữa thiên nhiên, văn hóa và những khoảng lặng
-                                của đảo Jeju.
+                                A journey curated for you — through Jeju’s
+                                nature, culture, and quiet moments.
                             </p>
                             <Link to="/lich-trinh">
-                                Thiết kế hành trình <ArrowDownRight size={17} />
+                                Design your itinerary <ArrowDownRight size={17} />
                             </Link>
                         </div>
                     </div>
@@ -57,7 +56,7 @@ export default function HomePage() {
                         <div className="image-frame">
                             <img
                                 src={editorialHero}
-                                alt="Bờ biển đá núi lửa Jeju"
+                                alt="Jeju volcanic coast"
                             />
                         </div>
                         <div className="floating-badge">
@@ -72,36 +71,36 @@ export default function HomePage() {
                 <section className="editorial-services reveal-up">
                     <div className="section-kicker">WHAT WE CURATE</div>
                     <h2>
-                        Đảo Jeju,
+                        Jeju Island,
                         <br />
-                        theo nhịp của <em>bạn.</em>
+                        at <em>your pace.</em>
                     </h2>
                     <div className="service-grid">
                         <Link to="/kham-pha">
                             <Compass />
                             <span>01</span>
-                            <h3>KHÁM PHÁ</h3>
+                            <h3>DISCOVER</h3>
                             <p>
-                                Những điểm đến được chọn theo sở thích, mùa và
-                                nhịp đi riêng.
+                                Destinations selected for your interests,
+                                season, and travel style.
                             </p>
                         </Link>
                         <Link to="/lich-trinh">
                             <Route />
                             <span>02</span>
-                            <h3>LỊCH TRÌNH</h3>
+                            <h3>ITINERARY</h3>
                             <p>
-                                Mỗi ngày được cân bằng giữa di chuyển, trải
-                                nghiệm và nghỉ ngơi.
+                                Each day balances movement, experiences, and
+                                time to rest.
                             </p>
                         </Link>
                         <Link to="/lich-trinh">
                             <MessageCircleMore />
                             <span>03</span>
-                            <h3>ĐỒNG HÀNH</h3>
+                            <h3>COMPANION</h3>
                             <p>
-                                Taewak lắng nghe và điều chỉnh hành trình trong
-                                một cuộc trò chuyện.
+                                Taewak listens and adapts your journey through
+                                conversation.
                             </p>
                         </Link>
                     </div>
@@ -121,7 +120,7 @@ export default function HomePage() {
                             <Link className="portfolio-image" to="/van-hoa">
                                 <img
                                     src={haenyeoImage}
-                                    alt="Nữ thợ lặn Haenyeo"
+                                    alt="Haenyeo woman diver"
                                 />
                                 <span>VIEW STORY</span>
                             </Link>

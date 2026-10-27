@@ -17,10 +17,10 @@ export class AdminGuard implements CanActivate {
     canActivate(context: ExecutionContext) {
         const request = context.switchToHttp().getRequest<AdminRequest>();
         const token = request.cookies?.jeju_session as string | undefined;
-        if (!token) throw new UnauthorizedException("Bạn chưa đăng nhập.");
+        if (!token) throw new UnauthorizedException("You are not signed in.");
         const user = this.auth.verify(token);
         if (!user.roles.includes("ADMIN"))
-            throw new ForbiddenException("Bạn không có quyền quản trị.");
+            throw new ForbiddenException("You do not have administrator access.");
         request.authUser = user;
         return true;
     }

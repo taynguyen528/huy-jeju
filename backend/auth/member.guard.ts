@@ -22,12 +22,12 @@ export class MemberGuard implements CanActivate {
         const token = request.cookies?.jeju_session as string | undefined;
         if (!token)
             throw new UnauthorizedException(
-                "Bạn cần đăng nhập để lưu lịch trình.",
+                "You must sign in to save an itinerary.",
             );
         const user = this.auth.verify(token);
         if (user.roles.includes("ADMIN"))
             throw new ForbiddenException(
-                "Tài khoản Admin không sử dụng chức năng lịch trình cá nhân.",
+                "Administrator accounts cannot use personal itineraries.",
             );
         request.authUser = user;
         return true;

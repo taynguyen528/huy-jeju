@@ -56,7 +56,7 @@ export default function AccountPage() {
                 <header>
                     <span>PRIVATE SPACE</span>
                     <h1>
-                        Xin chào,
+                        Welcome,
                         <br />
                         <em>{user?.displayName}.</em>
                     </h1>
@@ -69,36 +69,36 @@ export default function AccountPage() {
                 <section className="account-grid">
                     <article>
                         <UserRound />
-                        <span>HỒ SƠ</span>
+                        <span>PROFILE</span>
                         <h2>{user?.displayName}</h2>
                         <p>{user?.email}</p>
                     </article>
                     <article>
                         <CalendarDays />
-                        <span>HÀNH TRÌNH</span>
-                        <h2>{items.length} chuyến đi đã lưu</h2>
+                        <span>JOURNEYS</span>
+                        <h2>{items.length} saved trips</h2>
                         <p>
-                            Lịch trình do Taewak đề xuất và bạn quyết định lưu.
+                            Itineraries suggested by Taewak and saved by you.
                         </p>
                     </article>
                 </section>
                 <section className="saved-itineraries">
                     <div className="saved-heading">
                         <span>MY ITINERARIES</span>
-                        <h2>Lịch trình của tôi</h2>
+                        <h2>My itineraries</h2>
                     </div>
                     {loading ? (
                         <div className="saved-empty">
                             <Loader color="pink" />
-                            <Text>Đang tải lịch trình…</Text>
+                            <Text>Loading itineraries…</Text>
                         </div>
                     ) : items.length === 0 ? (
                         <div className="saved-empty">
                             <CalendarDays size={34} />
-                            <Text fw={700}>Bạn chưa lưu chuyến đi nào</Text>
+                            <Text fw={700}>You have no saved trips</Text>
                             <Text c="dimmed" size="sm">
-                                Mở Taewak, tạo lịch trình và chọn “Lưu lịch
-                                trình”.
+                                Open Taewak, create an itinerary, and choose
+                                “Save itinerary”.
                             </Text>
                         </div>
                     ) : (
@@ -108,15 +108,15 @@ export default function AccountPage() {
                                     <div>
                                         <Badge color="pink" variant="light">
                                             {item.status === "DRAFT"
-                                                ? "Bản nháp"
+                                                ? "Draft"
                                                 : item.status}
                                         </Badge>
                                         <h3>{item.title}</h3>
                                         <p>
                                             {item.startDate && item.endDate
                                                 ? `${item.startDate} → ${item.endDate}`
-                                                : "Thời gian linh hoạt"}{" "}
-                                            · {item.travelers} người
+                                                : "Flexible dates"}{" "}
+                                            · {item.travelers} travelers
                                         </p>
                                         <small>
                                             {[
@@ -129,7 +129,7 @@ export default function AccountPage() {
                                         </small>
                                     </div>
                                     <Group gap="xs">
-                                        <Tooltip label="Xem lịch trình">
+                                        <Tooltip label="View itinerary">
                                             <ActionIcon
                                                 size="lg"
                                                 variant="light"
@@ -139,7 +139,7 @@ export default function AccountPage() {
                                                 <Eye size={17} />
                                             </ActionIcon>
                                         </Tooltip>
-                                        <Tooltip label="Lưu trữ">
+                                        <Tooltip label="Archive">
                                             <ActionIcon
                                                 size="lg"
                                                 variant="light"
@@ -192,13 +192,13 @@ export default function AccountPage() {
                                     preview && void archive(preview.id)
                                 }
                             >
-                                Lưu trữ
+                                Archive
                             </Button>
                             <Button
                                 color="dark"
                                 onClick={() => setPreview(null)}
                             >
-                                Đóng
+                                Close
                             </Button>
                         </Group>
                     </Stack>

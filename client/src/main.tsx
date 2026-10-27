@@ -6,7 +6,6 @@ import '@mantine/dates/styles.css'
 import '@mantine/carousel/styles.css'
 import App from './App'
 import './styles.css'
-import { I18nProvider } from './i18n/I18nContext'
 
 const theme = createTheme({
   primaryColor: 'teal',
@@ -18,7 +17,7 @@ const theme = createTheme({
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <MantineProvider theme={theme}>
-      <I18nProvider><App /></I18nProvider>
+      <App />
     </MantineProvider>
   </StrictMode>,
 )

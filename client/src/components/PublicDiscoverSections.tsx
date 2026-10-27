@@ -8,7 +8,6 @@ import haenyeoImage from "../assets/jeju-haenyeo.png";
 import seongsanImage from "../assets/jeju-seongsan.png";
 import { getDestinations } from "../api";
 import type { Destination as ApiDestination } from "../types";
-import { useI18n } from "../i18n/I18nContext";
 
 type Destination = {
     title: string;
@@ -22,33 +21,33 @@ const fallbackDestinations: Destination[] = [
     {
         title: "Seongsan",
         area: "East Jeju",
-        note: "Bình minh trên miệng núi lửa",
+        note: "Sunrise over a volcanic crater",
         image: seongsanImage,
     },
     {
         title: "Haenyeo Coast",
         area: "Seogwipo",
-        note: "Di sản sống bên bờ biển",
+        note: "Living heritage by the sea",
         image: haenyeoImage,
     },
     {
         title: "Woljeongri",
         area: "North-east Jeju",
-        note: "Biển xanh và nhịp sống chậm",
+        note: "Blue water and a slower rhythm",
         image: editorialHero,
         position: "65% center",
     },
     {
         title: "Silver Grass",
         area: "Jeju Oreum",
-        note: "Cánh đồng trong mùa gió",
+        note: "Fields in the windy season",
         image: seongsanImage,
         position: "center bottom",
     },
     {
         title: "Volcanic Shore",
         area: "South Jeju",
-        note: "Đường đá đen chạm đại dương",
+        note: "Black-rock paths meeting the ocean",
         image: editorialHero,
         position: "20% center",
     },
@@ -79,19 +78,14 @@ export default function PublicDiscoverSections() {
     const [preview, setPreview] = useState<Destination | null>(null);
     const [destinations, setDestinations] =
         useState<Destination[]>(fallbackDestinations);
-    const { locale } = useI18n();
     useEffect(() => {
         void getDestinations(true)
             .then(({ items }) =>
                 setDestinations(
                     items.map((item: ApiDestination) => ({
-                        title: item[
-                            `name_${locale}` as keyof ApiDestination
-                        ] as string,
+                        title: item.name,
                         area: item.region,
-                        note: item[
-                            `description_${locale}` as keyof ApiDestination
-                        ] as string,
+                        note: item.description,
                         image:
                             item.image_key === "seongsan"
                                 ? seongsanImage
@@ -102,7 +96,7 @@ export default function PublicDiscoverSections() {
                 ),
             )
             .catch(() => undefined);
-    }, [locale]);
+    }, []);
     return (
         <>
             <section className="popular-section">
@@ -114,7 +108,7 @@ export default function PublicDiscoverSections() {
                         <em>destinations.</em>
                     </h2>
                     <p>
-                        Kéo qua lại để khám phá những lát cắt nổi bật của Jeju.
+                        Swipe through a curated collection of Jeju highlights.
                     </p>
                 </header>
                 <Carousel
@@ -166,8 +160,7 @@ export default function PublicDiscoverSections() {
                         Exclusive <em>edits.</em>
                     </h2>
                     <p>
-                        Những hành trình mẫu để bạn bắt đầu, sau đó tùy chỉnh
-                        cùng Taewak.
+                        Starter journeys you can personalize with Taewak.
                     </p>
                 </header>
                 <div className="offer-grid">
@@ -209,19 +202,19 @@ export default function PublicDiscoverSections() {
                         <section>
                             <button
                                 onClick={() => setPreview(null)}
-                                aria-label="Đóng"
+                                aria-label="Close"
                             >
                                 ×
                             </button>
                             <span>{preview.area}</span>
                             <h2>{preview.title}</h2>
                             <p>
-                                {preview.note}. Mở hành trình riêng để Taewak
-                                sắp xếp thời gian, tuyến đường và trải nghiệm
-                                phù hợp với bạn.
+                                {preview.note}. Open a personal itinerary and let
+                                Taewak arrange the timing, route, and experiences
+                                around you.
                             </p>
                             <Link to="/lich-trinh">
-                                Lên lịch trình <ArrowUpRight size={16} />
+                                Plan this trip <ArrowUpRight size={16} />
                             </Link>
                         </section>
                     </div>

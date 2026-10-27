@@ -21,15 +21,15 @@ export class MediaController {
     fileFilter: (_request, file, callback) => callback(null, file.mimetype.startsWith('image/') && allowedExtensions.has(extname(file.originalname).toLowerCase())),
   }))
   upload(@UploadedFile() file?: Express.Multer.File) {
-    if (!file) throw new BadRequestException('Chỉ chấp nhận ảnh JPG, PNG, WebP hoặc GIF tối đa 5 MB.')
+    if (!file) throw new BadRequestException('Only JPG, PNG, WebP, or GIF images up to 5 MB are accepted.')
     return { url: `/api/media/files/${file.filename}`, filename: file.filename, size: file.size, mimeType: file.mimetype }
   }
 
   @Get('files/:filename')
   file(@Param('filename') filename: string, @Res() response: Response) {
-    if (!/^[a-f0-9-]+\.(jpg|jpeg|png|webp|gif)$/i.test(filename)) throw new BadRequestException('Tên file không hợp lệ.')
+    if (!/^[a-f0-9-]+\.(jpg|jpeg|png|webp|gif)$/i.test(filename)) throw new BadRequestException('Invalid filename.')
     const path = resolve(uploadDirectory, filename)
-    if (!existsSync(path)) return response.status(404).json({ message: 'Không tìm thấy ảnh.' })
+    if (!existsSync(path)) return response.status(404).json({ message: 'Image not found.' })
     return response.sendFile(path)
   }
 }

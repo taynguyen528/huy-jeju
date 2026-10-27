@@ -12,9 +12,9 @@ export class ItineraryController {
 
   @Post()
   create(@Req() request: AuthenticatedRequest, @Body() body: ItineraryInput) {
-    if (!body?.title?.trim() || !body?.destination?.trim() || !body?.aiContent?.trim()) throw new BadRequestException('Tên, điểm đến và nội dung lịch trình là bắt buộc.')
-    if (!Number.isInteger(body.travelers) || body.travelers < 1 || body.travelers > 30) throw new BadRequestException('Số người không hợp lệ.')
-    if (body.startDate && body.endDate && body.endDate < body.startDate) throw new BadRequestException('Ngày về không thể trước ngày đi.')
+    if (!body?.title?.trim() || !body?.destination?.trim() || !body?.aiContent?.trim()) throw new BadRequestException('Title, destination, and itinerary content are required.')
+    if (!Number.isInteger(body.travelers) || body.travelers < 1 || body.travelers > 30) throw new BadRequestException('Invalid traveler count.')
+    if (body.startDate && body.endDate && body.endDate < body.startDate) throw new BadRequestException('End date cannot be before start date.')
     return this.itineraries.create(request.authUser.id, body)
   }
 

@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Compass,
   Map,
+  MapPin,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react'
 import { saveItinerary, sendChatMessage } from '../api'
 import type { ChatMessage, TripDraft } from '../types'
+import { ItineraryMap } from '../components/ItineraryMap'
 import EditorialLayout from '../components/EditorialLayout'
 import { useAuth } from '../auth/AuthContext'
 import { useNavigate } from 'react-router-dom'
@@ -28,21 +30,21 @@ const initialMessage: ChatMessage = {
   id: 'welcome',
   role: 'assistant',
   content:
-    'Annyeong! Mình là Taewak, trợ lý hành trình Jeju. Bạn muốn một chuyến đi thư giãn bên biển, khám phá văn hóa Haenyeo hay chinh phục Hallasan?',
+    'Annyeong! I’m Taewak, your Jeju itinerary assistant. Would you like a relaxing coastal trip, a journey into Haenyeo culture, or a Hallasan adventure?',
 }
 
 const suggestions = [
-  'Lịch trình Jeju 3 ngày cho cặp đôi',
-  'Khám phá văn hóa Haenyeo',
-  'Ăn gì gần Seongsan Ilchulbong?',
-  'Lịch trình 5 ngày không cần thuê ô tô',
-  'Một ngày trekking Hallasan an toàn',
-  'Tour làng cổ và chợ truyền thống',
-  'Gợi ý ngày mưa ở Jeju',
-  'Tối ưu chuyến đi với ngân sách 1.500.000 KRW',
+  'A 3-day Jeju itinerary for couples',
+  'Explore Haenyeo culture',
+  'What should I eat near Seongsan Ilchulbong?',
+  'A 5-day itinerary without a rental car',
+  'A safe day hike on Hallasan',
+  'A tour of historic villages and traditional markets',
+  'Ideas for a rainy day in Jeju',
+  'Plan a trip with a budget of KRW 1,500,000',
 ]
 
-const interests = ['Văn hóa', 'Thiên nhiên', 'Ẩm thực', 'Biển', 'Mua sắm']
+const interests = ['Culture', 'Nature', 'Food', 'Coast', 'Shopping']
 
 function PlannerPage() {
   const { user } = useAuth()
@@ -54,13 +56,13 @@ function PlannerPage() {
   const [panelCollapsed, setPanelCollapsed] = useState(false)
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [trip, setTrip] = useState<TripDraft>({
-    destination: 'Jeju, Hàn Quốc',
+    destination: 'Jeju, South Korea',
     startDate: '',
     endDate: '',
-    travelers: '2 người',
-    interests: ['Văn hóa', 'Thiên nhiên'],
-    pace: 'Cân bằng',
-    transport: 'Xe buýt + taxi',
+    travelers: '2 travelers',
+    interests: ['Culture', 'Nature'],
+    pace: 'Balanced',
+    transport: 'Bus + taxi',
     budget: '1500000',
   })
   const abortRef = useRef<AbortController | null>(null)
@@ -71,7 +73,7 @@ function PlannerPage() {
   }, [messages.length])
 
   const tripSummary = useMemo(() => {
-    const dates = trip.startDate && trip.endDate ? `${trip.startDate} → ${trip.endDate}` : 'Chưa chọn ngày'
+    const dates = trip.startDate && trip.endDate ? `${trip.startDate} → ${trip.endDate}` : 'Dates not selected'
     return `${trip.destination} · ${dates}`
   }, [trip])
 
@@ -93,7 +95,7 @@ function PlannerPage() {
       const result = await sendChatMessage(nextMessages, trip, abortRef.current.signal)
       setMessages((current) => [
         ...current,
-        { id: crypto.randomUUID(), role: 'assistant', content: result.message },
+        { id: crypto.randomUUID(), role: 'assistant', content: result.message, days: result.days },
       ])
     } catch (requestError) {
       if ((requestError as Error).name !== 'AbortError') {
@@ -129,23 +131,23 @@ function PlannerPage() {
         <section className={`workspace ${panelCollapsed ? 'panel-collapsed' : ''}`} id="itinerary">
           <aside className="trip-panel">
             <div className="panel-heading">
-              <div><span>BƯỚC 1</span><h2>Thông tin chuyến đi</h2></div>
+              <div><span>STEP 1</span><h2>Trip details</h2></div>
               <Map size={24} />
             </div>
 
             <div className="trip-form-section trip-form-primary">
-              <div className="trip-section-heading"><span>01</span><div><strong>Hành trình</strong><small>Địa điểm và thời gian dự kiến</small></div></div>
+              <div className="trip-section-heading"><span>01</span><div><strong>Journey</strong><small>Destination and travel dates</small></div></div>
               <TextInput
                 className="destination-input"
-                label="Điểm đến"
-                placeholder="Bạn muốn đi đâu?"
+                label="Destination"
+                placeholder="Where would you like to go?"
                 value={trip.destination}
                 onChange={(event) => setTrip({ ...trip, destination: event.currentTarget.value })}
                 leftSection={<Compass size={17} />}
               />
               <div className="date-grid ui-date-grid">
               <DatePickerInput
-                label="Ngày đi"
+                label="Start date"
                 placeholder="DD/MM/YYYY"
                 value={trip.startDate || null}
                 onChange={(value) => setTrip({ ...trip, startDate: value || '', endDate: trip.endDate && value && trip.endDate < value ? '' : trip.endDate })}
@@ -155,7 +157,7 @@ function PlannerPage() {
                 clearable
               />
               <DatePickerInput
-                label="Ngày về"
+                label="End date"
                 placeholder="DD/MM/YYYY"
                 value={trip.endDate || null}
                 onChange={(value) => setTrip({ ...trip, endDate: value || '' })}
@@ -167,28 +169,28 @@ function PlannerPage() {
               </div>
               <Select
                 className="travelers-select"
-                label="Số người"
+                label="Travelers"
                 value={trip.travelers}
-                onChange={(value) => setTrip({ ...trip, travelers: value || '2 người' })}
-                data={['1 người', '2 người', '3–4 người', '5+ người']}
+                onChange={(value) => setTrip({ ...trip, travelers: value || '2 travelers' })}
+                data={['1 traveler', '2 travelers', '3–4 travelers', '5+ travelers']}
                 allowDeselect={false}
                 checkIconPosition="right"
               />
             </div>
 
             <div className="trip-form-section">
-              <div className="trip-section-heading"><span>02</span><div><strong>Phong cách chuyến đi</strong><small>Điều chỉnh nhịp độ và chi phí</small></div></div>
+              <div className="trip-section-heading"><span>02</span><div><strong>Travel style</strong><small>Adjust pace and costs</small></div></div>
               <div className="trip-preferences-grid">
-                <Select label="Nhịp độ" value={trip.pace} onChange={(value) => setTrip({ ...trip, pace: value || 'Cân bằng' })} data={['Thư giãn', 'Cân bằng', 'Khám phá nhiều']} allowDeselect={false} />
-                <Select label="Phương tiện" value={trip.transport} onChange={(value) => setTrip({ ...trip, transport: value || 'Xe buýt + taxi' })} data={['Xe buýt + taxi', 'Thuê ô tô', 'Taxi', 'Tour trọn gói']} allowDeselect={false} />
+                <Select label="Pace" value={trip.pace} onChange={(value) => setTrip({ ...trip, pace: value || 'Balanced' })} data={['Relaxed', 'Balanced', 'Packed']} allowDeselect={false} />
+                <Select label="Transport" value={trip.transport} onChange={(value) => setTrip({ ...trip, transport: value || 'Bus + taxi' })} data={['Bus + taxi', 'Rental car', 'Taxi', 'Package tour']} allowDeselect={false} />
               </div>
-              <TextInput className="budget-input" label="Tổng ngân sách dự kiến" description="Cho toàn bộ chuyến đi · đơn vị KRW" value={trip.budget ? Number(trip.budget).toLocaleString('vi-VN') : ''} onChange={(event) => setTrip({ ...trip, budget: event.currentTarget.value.replace(/\D/g, '') })} leftSection={<WalletCards size={16} />} rightSection={<span className="currency-mark">₩</span>} inputMode="numeric" placeholder="Ví dụ: 1.500.000" />
+              <TextInput className="budget-input" label="Estimated total budget" description="For the entire trip · KRW" value={trip.budget ? Number(trip.budget).toLocaleString('en-US') : ''} onChange={(event) => setTrip({ ...trip, budget: event.currentTarget.value.replace(/\D/g, '') })} leftSection={<WalletCards size={16} />} rightSection={<span className="currency-mark">₩</span>} inputMode="numeric" placeholder="Example: 1,500,000" />
             </div>
 
             <div className="trip-form-section">
-              <div className="trip-section-heading"><span>03</span><div><strong>Sở thích</strong><small>Chọn nhiều mục để AI cá nhân hóa</small></div></div>
+              <div className="trip-section-heading"><span>03</span><div><strong>Interests</strong><small>Select several to personalize with AI</small></div></div>
               <fieldset>
-                <legend className="sr-only">Bạn quan tâm</legend>
+                <legend className="sr-only">Your interests</legend>
                 <Chip.Group multiple value={trip.interests} onChange={(value) => setTrip({ ...trip, interests: value })}>
                   <div className="chips ui-chips">
                     {interests.map((item) => <Chip key={item} value={item} variant="outline">{item}</Chip>)}
@@ -199,21 +201,24 @@ function PlannerPage() {
 
             <div className="trip-note">
               <CalendarDays size={20} />
-              <div><strong>Chuyến đi của bạn</strong><span>{tripSummary}</span></div>
+              <div><strong>Your trip</strong><span>{tripSummary}</span></div>
             </div>
           </aside>
 
           <section className="chat-card">
             <header className="chat-header">
               <div className="assistant-avatar">T</div>
-              <div><h2>Taewak</h2><span><i /> Trợ lý lịch trình Jeju</span></div>
+              <div><h2>Taewak</h2><span><i /> Jeju itinerary assistant</span></div>
               <div className="chat-header-actions">
-                <Button className="save-plan-button" variant="light" color="pink" leftSection={<Save size={16} />} disabled={!latestPlan || loading} loading={saveState === 'saving'} onClick={() => void saveCurrentPlan()}>{saveState === 'saved' ? 'Đã lưu' : 'Lưu lịch trình'}</Button>
-                <Tooltip label={panelCollapsed ? 'Mở thông tin chuyến đi' : 'Thu gọn thông tin chuyến đi'}>
-                  <ActionIcon className="panel-toggle" size={44} radius="xl" variant="outline" color="dark" onClick={() => setPanelCollapsed((value) => !value)} aria-label={panelCollapsed ? 'Mở thông tin chuyến đi' : 'Thu gọn thông tin chuyến đi'} aria-expanded={!panelCollapsed}>{panelCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}</ActionIcon>
+                <button className="save-plan-button" type="button" disabled={!latestPlan || loading || saveState === 'saving'} aria-busy={saveState === 'saving'} onClick={() => void saveCurrentPlan()}>
+                  <Save size={16} aria-hidden="true" />
+                  <span className="save-plan-label">{saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : 'Save itinerary'}</span>
+                </button>
+                <Tooltip label={panelCollapsed ? 'Show trip details' : 'Collapse trip details'}>
+                  <ActionIcon className="panel-toggle" size={44} radius="xl" variant="outline" color="dark" onClick={() => setPanelCollapsed((value) => !value)} aria-label={panelCollapsed ? 'Show trip details' : 'Collapse trip details'} aria-expanded={!panelCollapsed}>{panelCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}</ActionIcon>
                 </Tooltip>
-                <Tooltip label="Bắt đầu lại">
-                  <ActionIcon size={44} radius="xl" variant="outline" color="dark" onClick={resetChat} aria-label="Bắt đầu lại"><RotateCcw size={18} /></ActionIcon>
+                <Tooltip label="Start over">
+                  <ActionIcon size={44} radius="xl" variant="outline" color="dark" onClick={resetChat} aria-label="Start over"><RotateCcw size={18} /></ActionIcon>
                 </Tooltip>
               </div>
             </header>
@@ -224,36 +229,46 @@ function PlannerPage() {
                   {message.role === 'assistant' && <div className="mini-avatar">T</div>}
                   <div className="message-bubble">
                     {message.role === 'assistant'
-                      ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                      ? <>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                          {Boolean(message.days?.length) && <section className="itinerary-places" aria-label="Main places by day">
+                            <header><MapPin size={16}/><strong>Main places by day</strong></header>
+                            {message.days?.map(day => <div key={day.day} className="itinerary-place-day">
+                              <span>Day {day.day}</span>
+                              <div>{day.places.map(place => <button type="button" key={`${place.order}-${place.name}`} onClick={() => setInput(`Tell me more about ${place.name}`)}>{place.order}. {place.name}</button>)}</div>
+                            </div>)}
+                            <ItineraryMap days={message.days || []} />
+                          </section>}
+                        </>
                       : message.content}
                   </div>
                 </div>
               ))}
               {messages.length === 1 && (
                 <div className="suggestions">
-                  <span>Gợi ý để bắt đầu</span>
+                  <span>Ideas to get started</span>
                   {suggestions.map((item) => <Button key={item} variant="subtle" color="dark" justify="space-between" rightSection={<ChevronRight size={16} />} onClick={() => void submit(undefined, item)}>{item}</Button>)}
                 </div>
               )}
               {loading && <div className="message-row assistant"><div className="mini-avatar">T</div><div className="message-bubble typing"><i /><i /><i /></div></div>}
               {error && <div className="error-message">{error}</div>}
-              {saveState === 'saved' && <Alert color="green" title="Đã lưu lịch trình">Bạn có thể xem lại nội dung này trong trang Tài khoản.</Alert>}
+              {saveState === 'saved' && <Alert color="green" title="Itinerary saved">You can review it from your Account page.</Alert>}
             </div>
 
             <form className="chat-input" onSubmit={(event) => void submit(event)}>
-              <button type="button" className="add-button" aria-label="Thêm thông tin"><Plus size={20} /></button>
+              <button type="button" className="add-button" aria-label="Add information"><Plus size={20} /></button>
               <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void submit() }
-              }} placeholder="Hỏi Taewak về lịch trình Jeju..." rows={1} />
-              <button className="send-button" disabled={!input.trim() || loading} aria-label="Gửi"><Send size={18} /></button>
+              }} placeholder="Ask Taewak about your Jeju itinerary..." rows={1} />
+              <button className="send-button" disabled={!input.trim() || loading} aria-label="Send"><Send size={18} /></button>
             </form>
-            <p className="ai-note">AI có thể mắc lỗi. Hãy kiểm tra giờ mở cửa và thông tin quan trọng trước chuyến đi.</p>
+            <p className="ai-note">AI can make mistakes. Verify opening hours and important details before your trip.</p>
           </section>
         </section>
 
         <section className="next-step">
-          <span>Tiếp theo</span><h2>Biến gợi ý thành lịch trình từng ngày</h2>
-          <button>Khám phá tính năng <ArrowUp size={17} /></button>
+          <span>UP NEXT</span><h2>Turn suggestions into a day-by-day itinerary</h2>
+          <button>Explore the feature <ArrowUp size={17} /></button>
         </section>
 
       </main>

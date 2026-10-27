@@ -23,13 +23,13 @@ export class MailService {
         code: string,
     ) {
         if (this.provider === "console")
-            return this.developmentFallback("xác nhận", email, code);
+            return this.developmentFallback("verification", email, code);
         const safeName = this.escapeHtml(displayName);
         await this.send({
             to: email,
-            subject: "Mã xác nhận tài khoản Jeju",
-            text: `Xin chào ${displayName}, mã xác nhận tài khoản Jeju của bạn là ${code}. Mã có hiệu lực trong 10 phút.`,
-            html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px"><h1 style="margin:0 0 18px">Xác nhận tài khoản Jeju</h1><p>Xin chào <strong>${safeName}</strong>,</p><p>Nhập mã dưới đây để hoàn tất đăng ký:</p><div style="font-size:34px;font-weight:800;letter-spacing:10px;padding:20px;background:#f5f0eb;border-radius:12px;text-align:center">${code}</div><p style="color:#666">Mã có hiệu lực trong 10 phút. Không chia sẻ mã này với người khác.</p></div>`,
+            subject: "Verify your Jeju account",
+            text: `Hello ${displayName}, your Jeju account verification code is ${code}. It expires in 10 minutes.`,
+            html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px"><h1 style="margin:0 0 18px">Verify your Jeju account</h1><p>Hello <strong>${safeName}</strong>,</p><p>Enter the code below to complete registration:</p><div style="font-size:34px;font-weight:800;letter-spacing:10px;padding:20px;background:#f5f0eb;border-radius:12px;text-align:center">${code}</div><p style="color:#666">The code expires in 10 minutes. Do not share it with anyone.</p></div>`,
         });
         return { delivered: true, devCode: undefined };
     }
@@ -40,13 +40,13 @@ export class MailService {
         code: string,
     ) {
         if (this.provider === "console")
-            return this.developmentFallback("đặt lại mật khẩu", email, code);
+            return this.developmentFallback("password reset", email, code);
         const safeName = this.escapeHtml(displayName);
         await this.send({
             to: email,
-            subject: "Đặt lại mật khẩu Jeju",
-            text: `Xin chào ${displayName}, mã đặt lại mật khẩu của bạn là ${code}. Mã có hiệu lực trong 10 phút.`,
-            html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px"><h1>Đặt lại mật khẩu Jeju</h1><p>Xin chào <strong>${safeName}</strong>,</p><p>Mã đặt lại mật khẩu của bạn:</p><div style="font-size:34px;font-weight:800;letter-spacing:10px;padding:20px;background:#f5f0eb;border-radius:12px;text-align:center">${code}</div><p style="color:#666">Mã có hiệu lực trong 10 phút. Nếu bạn không yêu cầu thao tác này, hãy bỏ qua email.</p></div>`,
+            subject: "Reset your Jeju password",
+            text: `Hello ${displayName}, your password reset code is ${code}. It expires in 10 minutes.`,
+            html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px"><h1>Reset your Jeju password</h1><p>Hello <strong>${safeName}</strong>,</p><p>Your password reset code is:</p><div style="font-size:34px;font-weight:800;letter-spacing:10px;padding:20px;background:#f5f0eb;border-radius:12px;text-align:center">${code}</div><p style="color:#666">The code expires in 10 minutes. If you did not request this, ignore this email.</p></div>`,
         });
         return { delivered: true, devCode: undefined };
     }
@@ -55,7 +55,7 @@ export class MailService {
         if (this.provider === "brevo") return this.sendWithBrevo(email);
         if (this.provider === "resend") return this.sendWithResend(email);
         throw new Error(
-            `EMAIL_PROVIDER không hợp lệ: "${this.provider}". Chỉ hỗ trợ "console", "brevo" hoặc "resend".`,
+            `Invalid EMAIL_PROVIDER: "${this.provider}". Supported values are "console", "brevo", and "resend".`,
         );
     }
 
@@ -63,8 +63,8 @@ export class MailService {
         const apiKey = process.env.BREVO_API_KEY?.trim();
         const senderEmail = process.env.BREVO_FROM_EMAIL?.trim().toLowerCase();
         const senderName = process.env.BREVO_FROM_NAME?.trim() || "Jeju";
-        if (!apiKey) throw new Error("Chưa cấu hình BREVO_API_KEY.");
-        if (!senderEmail) throw new Error("Chưa cấu hình BREVO_FROM_EMAIL.");
+        if (!apiKey) throw new Error("BREVO_API_KEY is not configured.");
+        if (!senderEmail) throw new Error("BREVO_FROM_EMAIL is not configured.");
         await this.request("Brevo", "https://api.brevo.com/v3/smtp/email", {
             headers: { "api-key": apiKey },
             body: {
@@ -81,10 +81,10 @@ export class MailService {
         const apiKey = process.env.RESEND_API_KEY?.trim();
         const sender =
             process.env.RESEND_FROM?.trim() || "Jeju <onboarding@resend.dev>";
-        if (!apiKey) throw new Error("Chưa cấu hình RESEND_API_KEY.");
+        if (!apiKey) throw new Error("RESEND_API_KEY is not configured.");
         if (/@(yourdomain\.com|example\.com)>?$/i.test(sender))
             throw new Error(
-                "RESEND_FROM vẫn đang dùng domain mẫu. Hãy dùng onboarding@resend.dev để thử nghiệm hoặc một domain đã xác minh trên Resend.",
+                "RESEND_FROM still uses a placeholder domain. Use onboarding@resend.dev for testing or a verified Resend domain.",
             );
         await this.request("Resend", "https://api.resend.com/emails", {
             headers: { Authorization: `Bearer ${apiKey}` },
@@ -118,12 +118,12 @@ export class MailService {
             });
             if (!response.ok)
                 throw new Error(
-                    `${provider} từ chối gửi email (${response.status}): ${await this.readProviderError(provider, response)}`,
+                    `${provider} rejected the email (${response.status}): ${await this.readProviderError(provider, response)}`,
                 );
         } catch (error) {
             if (error instanceof Error && error.name === "AbortError")
                 throw new Error(
-                    `${provider} API không phản hồi trong 10 giây.`,
+                    `${provider} API did not respond within 10 seconds.`,
                     { cause: error },
                 );
             throw error;
@@ -150,10 +150,10 @@ export class MailService {
                     message,
                 )
             )
-                return "Resend đang ở chế độ thử nghiệm và chỉ cho phép gửi tới email chủ tài khoản. Hãy xác minh domain trên Resend và cấu hình RESEND_FROM bằng địa chỉ thuộc domain đó.";
-            return message || "Không có nội dung lỗi";
+                return "Resend is in test mode and can only send to the account owner. Verify a domain in Resend and configure RESEND_FROM with an address on that domain.";
+            return message || "No error details";
         } catch {
-            return body || "Không có nội dung lỗi";
+            return body || "No error details";
         }
     }
 
@@ -170,7 +170,7 @@ export class MailService {
     }
 
     private developmentFallback(purpose: string, email: string, code: string) {
-        console.log(`[DEV EMAIL] Mã ${purpose} cho ${email}: ${code}`);
+        console.log(`[DEV EMAIL] ${purpose} code for ${email}: ${code}`);
         return {
             delivered: false,
             devCode: process.env.NODE_ENV === "production" ? undefined : code,
