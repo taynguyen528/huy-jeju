@@ -16,6 +16,7 @@ import ArticleDetailPage from "./pages/ArticleDetailPage";
 import AboutPage from "./pages/AboutPage";
 import PresenceTracker from "./components/PresenceTracker";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import JejuAssistantWidget from "./components/JejuAssistantWidget";
 
 export default function App() {
     return (
@@ -56,6 +57,7 @@ export default function App() {
                     </Route>
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
+                <JejuAssistantWidget />
             </AuthProvider>
         </BrowserRouter>
     );
