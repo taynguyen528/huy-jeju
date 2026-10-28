@@ -1,7 +1,7 @@
 # Hướng dẫn sử dụng hệ thống Jeju
 
-> Phiên bản tài liệu: 0.39
-> Cập nhật gần nhất: 27/10/2026
+> Phiên bản tài liệu: 0.43
+> Cập nhật gần nhất: 28/10/2026
 > Phạm vi: môi trường phát triển local
 
 ## 1. Giới thiệu
@@ -13,6 +13,7 @@ Jeju là website hỗ trợ khám phá văn hóa và du lịch Jeju. Hệ thốn
 - Carousel kéo bằng chuột hoặc cảm ứng.
 - Preview nhanh địa điểm.
 - Trợ lý AI Taewak hỗ trợ lên lịch trình.
+- Lối tắt “Trợ lý Jeju” cố định ở góc dưới bên phải trên mọi trang; chọn nhân vật để mở trang lập lịch trình.
 - Đăng ký, đăng nhập và quản lý phiên người dùng.
 - Trang tài khoản cá nhân.
 - Khu vực quản trị dành cho Admin.
@@ -715,6 +716,10 @@ Khi thêm hoặc thay đổi chức năng có ảnh hưởng đến người dù
 
 | Ngày | Phiên bản | Thay đổi |
 | --- | --- | --- |
+| 28/10/2026 | 0.43 | Căn thẳng hàng hai card “The Island Edit” trên trang chủ, bỏ hiệu ứng hạ card bên phải 100px làm tiêu đề lệch và sát footer. |
+| 28/10/2026 | 0.42 | Sửa sidebar desktop ghi đè căn giữa của các trang có giới hạn chiều rộng, loại bỏ hiện tượng nội dung bị ghim sang trái và dư khoảng trắng lớn bên phải. |
+| 28/10/2026 | 0.41 | Thay ảnh JPEG nền đen của widget Trợ lý Jeju bằng PNG có nền trong suốt để hiển thị đúng trên mọi trình duyệt và màu nền trang. |
+| 28/10/2026 | 0.40 | Thêm nhân vật và nhãn “Trợ lý Jeju” cố định ở góc dưới bên phải trên mọi trang, liên kết trực tiếp tới trang lập lịch trình. |
 | 27/10/2026 | 0.39 | Tích hợp Geoapify Geocoding làm nguồn tọa độ ưu tiên sau database và trước Nominatim; bổ sung biến `GEOAPIFY_API_KEY` cùng hướng dẫn bảo vệ key. |
 | 27/10/2026 | 0.38 | Bắt AI xuất dữ liệu địa điểm cho đủ mọi ngày; bản đồ giữ các ngày chưa có tọa độ trong legend, báo số điểm chưa định vị và cho phép tra cứu lại kết quả thất bại thay vì cache vĩnh viễn. |
 | 27/10/2026 | 0.37 | Sửa dependency injection của bộ phân giải địa điểm; lỗi tải tọa độ không còn bị báo nhầm thành lỗi AI 502 và không làm mất nội dung lịch trình đã tạo. |
